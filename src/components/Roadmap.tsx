@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+﻿import { motion } from 'framer-motion'
 import SectionShell from './SectionShell'
 
 type Milestone = {
@@ -86,7 +86,7 @@ const milestones: Milestone[] = [
 ]
 
 const dotColor = (s: Milestone['status']) =>
-  s === 'now' ? '#D97757' : s === 'next' ? '#A8B89C' : 'rgba(236,231,222,0.35)'
+  s === 'now' ? '#c4677c' : s === 'next' ? '#4fa77a' : 'rgba(236,231,222,0.35)'
 
 const statusLabel: Record<Milestone['status'], string> = {
   now: 'В работе',
@@ -134,9 +134,9 @@ export default function Roadmap() {
                 className="relative w-3 h-3 rounded-full ring-4"
                 style={{
                   background: dotColor(m.status),
-                  boxShadow: m.status === 'now' ? '0 0 24px rgba(217,119,87,0.6)' : 'none',
+                  boxShadow: m.status === 'now' ? '0 0 24px rgba(196,103,124,0.6)' : 'none',
                   // @ts-expect-error css var support
-                  '--tw-ring-color': '#0a0608',
+                  '--tw-ring-color': '#151417',
                 }}
               />
               <div className="mt-6 rounded-2xl border-hair p-5 w-full text-left min-h-[220px]">
@@ -178,7 +178,7 @@ export default function Roadmap() {
                 className="absolute -left-[22px] top-2 block w-3 h-3 rounded-full"
                 style={{
                   background: dotColor(m.status),
-                  boxShadow: m.status === 'now' ? '0 0 20px rgba(217,119,87,0.6)' : 'none',
+                  boxShadow: m.status === 'now' ? '0 0 20px rgba(196,103,124,0.6)' : 'none',
                 }}
               />
               <div className="font-mono text-[10px] tracking-[0.24em] uppercase text-white/40 mb-1">

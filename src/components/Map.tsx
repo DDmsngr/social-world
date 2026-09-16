@@ -1,4 +1,4 @@
-import SectionShell from './SectionShell'
+﻿import SectionShell from './SectionShell'
 
 const districts = [
   { name: 'Центр',    pulse: 94, delta: '+18%', tone: 'clay' as const },
@@ -30,7 +30,7 @@ export default function Map() {
             className="absolute inset-0"
             style={{
               background:
-                'radial-gradient(60% 55% at 55% 45%, rgba(217,119,87,0.35) 0%, rgba(217,119,87,0.06) 45%, transparent 70%), radial-gradient(35% 40% at 25% 70%, rgba(217,119,87,0.20) 0%, transparent 60%), radial-gradient(30% 35% at 78% 65%, rgba(168,184,156,0.20) 0%, transparent 60%), #0e0709',
+                'radial-gradient(60% 55% at 55% 45%, rgba(196,103,124,0.35) 0%, rgba(196,103,124,0.06) 45%, transparent 70%), radial-gradient(35% 40% at 25% 70%, rgba(196,103,124,0.20) 0%, transparent 60%), radial-gradient(30% 35% at 78% 65%, rgba(110,155,196,0.20) 0%, transparent 60%), #151417',
             }}
           />
           {/* streets */}
@@ -72,11 +72,11 @@ export default function Map() {
               <span className="relative flex h-2.5 w-2.5">
                 <span
                   className="absolute inset-0 rounded-full opacity-40 animate-ping"
-                  style={{ background: p.tone === 'clay' ? '#D97757' : '#A8B89C' }}
+                  style={{ background: p.tone === 'clay' ? '#c4677c' : '#6e9bc4' }}
                 />
                 <span
                   className="relative inline-flex h-2.5 w-2.5 rounded-full"
-                  style={{ background: p.tone === 'clay' ? '#D97757' : '#A8B89C' }}
+                  style={{ background: p.tone === 'clay' ? '#c4677c' : '#6e9bc4' }}
                 />
               </span>
             </div>
@@ -122,9 +122,9 @@ export default function Map() {
                         width: `${d.pulse}%`,
                         background:
                           d.tone === 'clay'
-                            ? 'linear-gradient(90deg, #d97757, #f0a37e)'
+                            ? 'linear-gradient(90deg, #7a2436, #c4677c)'
                             : d.tone === 'sage'
-                            ? 'linear-gradient(90deg, #a8b89c, #cddabf)'
+                            ? 'linear-gradient(90deg, #4fa77a, #7fc9a3)'
                             : 'rgba(255,255,255,0.35)',
                       }}
                     />

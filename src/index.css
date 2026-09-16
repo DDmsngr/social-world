@@ -1,13 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #0a0608;
-  --ink2: #12090c;
-  --paper: #f5efe4;
-  --clay: #d97757;
-  --sage: #a8b89c;
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
+  --ink: #151417;
+  --ink2: #211f22;
+  --paper: #e7e4e2;
+
+  /* Бордовый — цвет действия: кнопки и заливки. */
+  --primary: #7a2436;
+  --primary-hover: #963148;
+
+  /* Тот же бордовый для текста и иконок на графите: #7a2436 на тёмном
+     фоне даёт контраст 1,8:1 и читается как грязное пятно. */
+  --primary-tint: #c4677c;
+
+  --success: #4fa77a;
+  --geo: #6e9bc4;
+
+  --line: rgba(64, 59, 62, 0.55);
+  --line-strong: #403b3e;
 }
 
 @layer base {
@@ -77,8 +87,12 @@
       0 0 40px rgba(255, 255, 255, 0.1);
   }
 
-  .text-clay { color: var(--clay); }
-  .text-sage { color: var(--sage); }
+  /* Имена оставлены прежними: по всему сайту это акцентный текст, а не
+     заливка, поэтому здесь светлый оттенок бордового.
+     Вторым акцентом идёт холодный синий, а не зелёный: эти классы стоят
+     в том числе посреди заголовков, а зелёный там читается как статус. */
+  .text-clay { color: var(--primary-tint); }
+  .text-sage { color: var(--geo); }
   .bg-ink   { background: var(--ink); }
   .bg-ink2  { background: var(--ink2); }
   .border-hair       { border: 1px solid var(--line); }

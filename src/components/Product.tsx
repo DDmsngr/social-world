@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactElement } from 'react'
+﻿import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Home, Search, Plus, Compass, User, Bookmark, Heart, MessageCircle, MapPin, Sparkles, Camera, Video, Zap, PenLine, Radio, CalendarDays } from 'lucide-react'
 import SectionShell from './SectionShell'
@@ -98,7 +98,7 @@ function DiscoverScreen() {
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(70% 60% at 55% 45%, rgba(217,119,87,0.5) 0%, rgba(217,119,87,0.06) 45%, transparent 70%), radial-gradient(35% 45% at 20% 75%, rgba(217,119,87,0.35) 0%, transparent 60%), radial-gradient(30% 40% at 78% 65%, rgba(168,184,156,0.35) 0%, transparent 60%), #0e0709',
+              'radial-gradient(70% 60% at 55% 45%, rgba(196,103,124,0.5) 0%, rgba(196,103,124,0.06) 45%, transparent 70%), radial-gradient(35% 45% at 20% 75%, rgba(196,103,124,0.35) 0%, transparent 60%), radial-gradient(30% 40% at 78% 65%, rgba(110,155,196,0.35) 0%, transparent 60%), #151417',
           }}
         />
         <svg className="absolute inset-0 w-full h-full opacity-40" viewBox="0 0 300 400" preserveAspectRatio="none">
@@ -120,8 +120,8 @@ function DiscoverScreen() {
         ].map((p, i) => (
           <div key={i} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: p.x, top: p.y }}>
             <span className={`relative flex ${p.big ? 'h-3 w-3' : 'h-2 w-2'}`}>
-              <span className="absolute inset-0 rounded-full opacity-40 animate-ping" style={{ background: p.tone === 'clay' ? '#D97757' : '#A8B89C' }} />
-              <span className={`relative inline-flex rounded-full ${p.big ? 'h-3 w-3' : 'h-2 w-2'}`} style={{ background: p.tone === 'clay' ? '#D97757' : '#A8B89C' }} />
+              <span className="absolute inset-0 rounded-full opacity-40 animate-ping" style={{ background: p.tone === 'clay' ? '#c4677c' : '#6e9bc4' }} />
+              <span className={`relative inline-flex rounded-full ${p.big ? 'h-3 w-3' : 'h-2 w-2'}`} style={{ background: p.tone === 'clay' ? '#c4677c' : '#6e9bc4' }} />
             </span>
           </div>
         ))}
@@ -214,7 +214,7 @@ function ProfileScreen() {
       </div>
       <div className="px-5 mt-3">
         <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-          <div className="h-full w-[94%] rounded-full" style={{ background: 'linear-gradient(90deg, #d97757, #f0a37e)' }} />
+          <div className="h-full w-[94%] rounded-full" style={{ background: 'linear-gradient(90deg, #7a2436, #c4677c)' }} />
         </div>
         <div className="mt-1.5 flex justify-between text-[8px] tracking-widest uppercase text-white/40">
           <span>Репутация</span><span className="text-clay">94 / 100</span>
@@ -284,10 +284,10 @@ export default function Product() {
             {/* clay glow */}
             <div className="absolute -inset-16 pointer-events-none" aria-hidden>
               <div className="w-full h-full rounded-full"
-                   style={{ background: 'radial-gradient(closest-side, rgba(217,119,87,0.25), transparent 70%)' }} />
+                   style={{ background: 'radial-gradient(closest-side, rgba(196,103,124,0.25), transparent 70%)' }} />
             </div>
 
-            <div className="relative w-[300px] h-[620px] rounded-[52px] border-hair-strong bg-ink2 p-3 shadow-[0_60px_120px_-40px_rgba(217,119,87,0.35)]">
+            <div className="relative w-[300px] h-[620px] rounded-[52px] border-hair-strong bg-ink2 p-3 shadow-[0_60px_120px_-40px_rgba(196,103,124,0.35)]">
               {/* notch */}
               <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-5 rounded-full bg-black z-30" />
 

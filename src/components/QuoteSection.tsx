@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+﻿import { useEffect, useRef } from 'react'
 
 const clamp = (min: number, max: number, v: number) =>
   Math.max(min, Math.min(max, v))
@@ -43,7 +43,7 @@ export default function QuoteSection() {
     <section
       ref={sectionRef}
       className="relative min-h-screen w-full overflow-hidden flex items-center justify-center px-6 md:px-12"
-      style={{ background: 'radial-gradient(120% 80% at 50% 50%, #12090c 0%, #0a0608 60%)' }}
+      style={{ background: 'radial-gradient(120% 80% at 50% 50%, #211f22 0%, #151417 60%)' }}
     >
       {/* subtle horizontal hairlines top / bottom of the section */}
       <div className="absolute top-24 left-0 right-0 divider-x" />
@@ -54,7 +54,7 @@ export default function QuoteSection() {
         ref={glowRef}
         className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[900px] rounded-full will-change-transform"
         style={{
-          background: 'radial-gradient(closest-side, rgba(217,119,87,0.18), rgba(217,119,87,0) 70%)',
+          background: 'radial-gradient(closest-side, rgba(196,103,124,0.18), rgba(196,103,124,0) 70%)',
           transform: 'translate3d(-50%, 40px, 0)',
           filter: 'blur(20px)',
         }}
