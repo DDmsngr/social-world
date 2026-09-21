@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { cleanSandbox } from './sandbox'
 
 /**
  * Сценарии против РЕАЛЬНОГО бэкенда (Supabase). Данные создаются в боевой базе,
@@ -13,6 +14,7 @@ const adminOk = !!(env.E2E_ADMIN_EMAIL && env.E2E_ADMIN_PASSWORD)
 const memberOk = !!(env.E2E_MEMBER_EMAIL && env.E2E_MEMBER_PASSWORD && env.E2E_MEMBER_NAME)
 test.skip(!adminOk, 'нет E2E_ADMIN_*: учётка ещё не заведена')
 test.describe.configure({ mode: 'serial' })
+test.beforeAll(async () => { await cleanSandbox() })
 
 const title = `E2E задача ${Date.now()}`
 
