@@ -89,7 +89,12 @@ test('member: видит уведомление, не может создава�
   test.skip(!memberOk, 'нет E2E_MEMBER_*')
   await member(page)
   await page.goto('dashboard/notifications')
+  // «назначили задачу» — личное уведомление, в «Общих» его быть не должно
+  await expect(page.getByRole('tab', { name: /Личные/ })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByTestId('notifications')).toContainText(title)
+  await page.getByRole('tab', { name: /Общие/ }).click()
+  await expect(page.getByTestId('notifications')).not.toContainText(`Вам назначили задачу «${title}»`)
+  await page.getByRole('tab', { name: /Личные/ }).click()
 
   await page.goto('dashboard/tasks')
   await expect(page.getByRole('button', { name: 'Новая задача' })).toHaveCount(0)
