@@ -14,12 +14,17 @@ import TaskDetail from './pages/TaskDetail'
 import Team from './pages/Team'
 import MemberProfile from './pages/MemberProfile'
 import Files from './pages/Files'
+import FilePage from './pages/FilePage'
 import Messages from './pages/Messages'
 import SearchPage from './pages/SearchPage'
 import Notifications from './pages/Notifications'
 
+// Realtime мгновенно инвалидирует кеш, а опрос раз в 20 с — страховка на случай
+// оборванного websocket (корпоративный прокси, спящая вкладка). Вкладка в фоне не опрашивается.
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { staleTime: 15_000, retry: 1, refetchOnWindowFocus: false } },
+  defaultOptions: {
+    queries: { staleTime: 10_000, retry: 1, refetchOnWindowFocus: true, refetchInterval: 20_000 },
+  },
 })
 
 function Protected() {
@@ -75,6 +80,7 @@ export default function DashboardApp() {
                 <Route path="team" element={<Team />} />
                 <Route path="team/:userId" element={<MemberProfile />} />
                 <Route path="files" element={<Files />} />
+                <Route path="files/:id" element={<FilePage />} />
                 <Route path="messages" element={<Messages />} />
                 <Route path="messages/:convId" element={<Messages />} />
                 <Route path="search" element={<SearchPage />} />

@@ -6,7 +6,7 @@ import { createTask, updateTask, type TaskPatch } from './api'
 import { useWorkspace } from './auth'
 import { PRIORITIES, STATUSES, fmtDate, isOverdue, priorityMeta, statusMeta, todayIso } from './meta'
 import type { Priority, Task, TaskStatus } from './types'
-import { Avatar, Field, Modal, errMsg, useToast } from './ui'
+import { Avatar, DateInput, Field, Modal, errMsg, useToast } from './ui'
 
 export function StatusChip({ status }: { status: TaskStatus }) {
   const m = statusMeta(status)
@@ -49,8 +49,8 @@ export function TaskCardBody({ task }: { task: Task }) {
   return (
     <>
       <div className="flex items-start justify-between gap-2">
-        <Link to={`/dashboard/tasks/${task.id}`} className="text-sm font-medium leading-snug hover:underline">
-          {task.title}
+        <Link to={`/dashboard/tasks/${task.id}`} draggable={false} className="text-sm font-medium leading-snug hover:underline">
+          <span className="dash-muted mr-1 font-mono text-xs font-normal">#{task.num}</span>{task.title}
         </Link>
         <Avatar member={byUser(task.assignee_id)} size={24} />
       </div>
@@ -160,7 +160,7 @@ export function CreateTaskModal({ open, onClose, initialStatus = 'todo' }: {
             </select>
           </Field>
           <Field label="Срок">
-            <input className="dash-input" type="date" min={todayIso()} value={due} onChange={e => setDue(e.target.value)} />
+            <DateInput min={todayIso()} value={due} onChange={setDue} />
           </Field>
         </div>
         <div className="flex justify-end gap-2 pt-2">

@@ -25,6 +25,7 @@ export interface Task {
   id: string
   workspace_id: string
   project_id: string
+  num: number
   title: string
   description: string
   status: TaskStatus
@@ -70,9 +71,10 @@ export interface Attachment {
 export interface Conversation {
   id: string
   workspace_id: string
-  kind: 'channel' | 'direct'
+  kind: 'channel' | 'direct' | 'group'
   name: string | null
   direct_key: string | null
+  created_by: string | null
 }
 
 export interface Message {
@@ -80,6 +82,7 @@ export interface Message {
   conversation_id: string
   author_id: string | null
   body: string
+  task_id: string | null
   created_at: string
   edited_at: string | null
   deleted_at: string | null

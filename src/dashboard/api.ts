@@ -179,11 +179,29 @@ export async function uploadFile(
   const ins = await supabase.from('ws_attachments').insert({
     task_id: target.taskId ?? null, message_id: target.messageId ?? null,
     storage_path: path, filename: file.name, mime: file.type || null, size: file.size,
-  })
+  }).select().single()
   if (ins.error) {
     await supabase.storage.from(BUCKET).remove([path]) // не оставляем сироту без записи
     throw new Error(ins.error.message)
   }
+  return ins.data as Attachment
+}
+
+export async function fetchAttachment(id: string) {
+  return check(await supabase.from('ws_attachments').select('*').eq('id', id).maybeSingle()) as Attachment | null
+}
+
+export const isImage = (a: Pick<Attachment, 'mime' | 'filename'>) =>
+  (a.mime ?? '').startsWith('image/') || /\.(png|jpe?g|gif|webp|avif|bmp)$/i.test(a.filename)
+
+/** Подпись файла внутри задачи: скрин-1, скрин-2 (картинки) и файл-1, файл-2 (остальное). */
+export function fileLabels(files: Pick<Attachment, 'id' | 'mime' | 'filename' | 'created_at'>[]) {
+  const out = new Map<string, string>()
+  let img = 0, other = 0
+  for (const f of [...files].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
+    out.set(f.id, isImage(f) ? `скрин-${++img}` : `файл-${++other}`)
+  }
+  return out
 }
 
 export async function fetchAttachments(opts: {
@@ -199,8 +217,8 @@ export async function fetchAttachments(opts: {
 }
 
 /** Подписанная ссылка на минуту: файлы приватные, публичного URL у них нет. */
-export async function signedUrl(path: string, download?: string) {
-  const res = await supabase.storage.from(BUCKET).createSignedUrl(path, 60, download ? { download } : undefined)
+export async function signedUrl(path: string, download?: string, ttl = 60) {
+  const res = await supabase.storage.from(BUCKET).createSignedUrl(path, ttl, download ? { download } : undefined)
   if (res.error) throw new Error(res.error.message)
   return res.data.signedUrl
 }
@@ -255,9 +273,21 @@ export async function fetchMessages(conversationId: string, before?: string) {
   return (check(await q) as Message[]).reverse()
 }
 
-export async function sendMessage(conversationId: string, body: string) {
-  return check(await supabase.from('ws_messages').insert({ conversation_id: conversationId, body })
+export async function sendMessage(conversationId: string, body: string, taskId: string | null = null) {
+  return check(await supabase.from('ws_messages').insert({ conversation_id: conversationId, body, task_id: taskId })
     .select().single()) as Message
+}
+
+export async function createGroup(workspaceId: string, name: string, members: string[]) {
+  return check(await supabase.rpc('ws_create_group', { p_ws: workspaceId, p_name: name, p_members: members })) as string
+}
+
+export async function addGroupMembers(conversationId: string, members: string[]) {
+  check(await supabase.rpc('ws_group_add_members', { p_conv: conversationId, p_members: members }))
+}
+
+export async function fetchConvMembers(conversationId: string) {
+  return check(await supabase.rpc('ws_conv_members', { p_conv: conversationId })) as string[]
 }
 
 export async function openDirect(workspaceId: string, otherUserId: string) {
@@ -309,7 +339,7 @@ export async function acceptInvitation(token: string) {
 // ── поиск ───────────────────────────────────────────────────────────────────
 
 export interface SearchResult {
-  tasks: { id: string; title: string; status: TaskStatus }[]
+  tasks: { id: string; num: number; title: string; status: TaskStatus }[]
   members: { user_id: string; name: string; email: string; role: string }[]
   messages: { id: string; conversation_id: string; body: string; created_at: string }[]
   files: { id: string; task_id: string | null; filename: string; size: number }[]

@@ -153,6 +153,106 @@ test('сообщения: отправка, непрочитанное у адр
   await expect(m.getByTestId('thread')).toContainText(text)
 })
 
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+
+test('комментарий с файлами: ссылки «скрин-N» в тексте и предпросмотр', async ({ page }) => {
+  await admin(page)
+  await page.goto('dashboard/tasks')
+  await page.getByRole('link', { name: title }).click()
+  const box = page.getByLabel('Новый комментарий')
+  await page.getByTestId('comment-file-input').setInputFiles([
+    { name: 'shot-a.png', mimeType: 'image/png', buffer: PNG },
+    { name: 'shot-b.png', mimeType: 'image/png', buffer: PNG },
+    { name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('n') },
+  ])
+  // ссылки вставились в текст сразу, до отправки
+  await expect(box).toHaveValue(/\[скрин-\d+\].*\[скрин-\d+\].*\[файл-\d+\]/)
+  await box.fill(`Смотри ${await box.inputValue()}`)
+  await page.getByRole('button', { name: 'Отправить' }).click()
+  const link = page.getByTestId('comments').getByRole('link', { name: /^скрин-\d+$/ }).first()
+  await expect(link).toBeVisible()
+  await expect(link).toHaveAttribute('href', /\/dashboard\/files\/[0-9a-f-]{36}$/)
+  // и файлы лежат внизу списком, с подписями
+  await expect(page.getByTestId('files')).toContainText('shot-a.png')
+  await expect(page.getByTestId('files')).toContainText('notes.txt')
+  await link.click()
+  await expect(page.getByRole('heading', { name: /shot-[ab]\.png/ })).toBeVisible()
+  await expect(page.locator('img[alt^="shot-"]')).toBeVisible()
+})
+
+test('несколько файлов сразу через «Прикрепить файлы» + превью', async ({ page }) => {
+  await admin(page)
+  await page.goto('dashboard/tasks')
+  await page.getByRole('link', { name: title }).click()
+  await expect(page.getByTestId('files')).toBeVisible()
+  const before = await page.getByTestId('files').locator('li').count()
+  await page.getByTestId('file-input').setInputFiles([
+    { name: 'multi-1.png', mimeType: 'image/png', buffer: PNG },
+    { name: 'multi-2.png', mimeType: 'image/png', buffer: PNG },
+  ])
+  await expect(page.getByTestId('files').locator('li')).toHaveCount(before + 2)
+  await page.getByRole('button', { name: 'Просмотр multi-1.png' }).click()
+  await expect(page.getByRole('dialog').locator('img')).toBeVisible()
+})
+
+test('чат: Markdown, группа и задача одним щелчком', async ({ browser }) => {
+  test.skip(!memberOk, 'нет E2E_MEMBER_*')
+  const a = await browser.newPage({ baseURL: test.info().project.use.baseURL })
+  const m = await browser.newPage({ baseURL: test.info().project.use.baseURL })
+  await admin(a); await member(m)
+  const group = `Группа ${Date.now()}`
+  await a.goto('dashboard/messages')
+  await a.getByRole('button', { name: 'Новая группа' }).click()
+  await a.getByRole('dialog').getByLabel('Название').fill(group)
+  await a.getByRole('dialog').getByRole('checkbox', { name: /E2E Member/ }).check()
+  await a.getByRole('button', { name: 'Создать группу' }).click()
+  await expect(a.getByRole('heading', { name: group })).toBeVisible()
+
+  await a.getByLabel('Сообщение').fill('это **жирный** текст')
+  await a.getByRole('button', { name: 'Отправить' }).click()
+  await expect(a.getByTestId('thread').locator('strong', { hasText: 'жирный' })).toBeVisible()
+
+  await a.getByRole('button', { name: 'Прикрепить задачу' }).click()
+  await a.getByLabel('Поиск задачи').fill(title)
+  await a.getByRole('dialog').getByRole('button', { name: new RegExp(title) }).click()
+  await a.getByRole('button', { name: 'Отправить' }).click()
+  await expect(a.getByTestId('task-ref').filter({ hasText: title })).toBeVisible()
+
+  // у участника группа появилась сама (без ручного обновления) и содержит карточку задачи
+  await m.goto('dashboard/messages')
+  await expect(m.getByRole('link', { name: new RegExp(group) })).toBeVisible({ timeout: 30_000 })
+  await m.getByRole('link', { name: new RegExp(group) }).click()
+  await expect(m.getByTestId('task-ref').filter({ hasText: title })).toBeVisible()
+  await m.getByTestId('task-ref').first().click()
+  await expect(m).toHaveURL(/\/dashboard\/tasks\//)
+})
+
+test('чат: личный диалог открывается сразу после создания', async ({ browser }) => {
+  test.skip(!memberOk, 'нет E2E_MEMBER_*')
+  const m = await browser.newPage({ baseURL: test.info().project.use.baseURL })
+  await member(m)
+  await m.goto('dashboard/messages')
+  await m.getByLabel('Новый личный диалог').selectOption({ label: 'E2E Admin' })
+  await expect(m.getByLabel('Сообщение')).toBeVisible()
+  await expect(m.getByText('Диалог не найден')).toHaveCount(0)
+})
+
+test('автообновление: изменение одного пользователя видно другому без перезагрузки', async ({ browser }) => {
+  test.skip(!memberOk, 'нет E2E_MEMBER_*')
+  const a = await browser.newPage({ baseURL: test.info().project.use.baseURL })
+  const m = await browser.newPage({ baseURL: test.info().project.use.baseURL })
+  await admin(a); await member(m)
+  await a.goto('dashboard/tasks'); await a.getByRole('link', { name: title }).click()
+  await m.goto('dashboard/tasks'); await m.getByRole('link', { name: title }).click()
+  await expect(m.getByLabel('Статус')).not.toHaveValue('done')
+  await a.getByLabel('Статус').selectOption('done')
+  await expect(m.getByLabel('Статус')).toHaveValue('done', { timeout: 30_000 })
+  // и наоборот: комментарий участника появляется у админа
+  await m.getByLabel('Новый комментарий').fill('живой комментарий')
+  await m.getByRole('button', { name: 'Отправить' }).click()
+  await expect(a.getByTestId('comments')).toContainText('живой комментарий', { timeout: 30_000 })
+})
+
 test('обзор показывает счётчики; мобильная вёрстка без горизонтальной прокрутки', async ({ page }) => {
   await admin(page)
   await expect(page.getByTestId('stat-total')).toBeVisible()

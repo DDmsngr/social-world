@@ -58,6 +58,24 @@
   .dash-row { border-bottom: 1px solid rgba(64, 59, 62, .55); }
   .dash-row:last-child { border-bottom: 0; }
 
+  .dash-md { font-size: 14px; line-height: 1.55; overflow-wrap: anywhere; }
+  .dash-md > *:first-child { margin-top: 0; }
+  .dash-md > *:last-child { margin-bottom: 0; }
+  .dash-md p { margin: 0.35em 0; }
+  .dash-md ul, .dash-md ol { margin: 0.35em 0; padding-left: 1.3em; }
+  .dash-md ul { list-style: disc; }
+  .dash-md ol { list-style: decimal; }
+  .dash-md a { color: var(--d-tint); text-decoration: underline; }
+  .dash-md code { background: rgba(0,0,0,.35); padding: 1px 5px; border-radius: 5px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+  .dash-md pre { background: rgba(0,0,0,.35); padding: 10px 12px; border-radius: 8px; overflow-x: auto; margin: 0.5em 0; }
+  .dash-md pre code { background: none; padding: 0; }
+  .dash-md blockquote { border-left: 3px solid var(--d-line); margin: 0.4em 0; padding-left: 10px; color: var(--d-muted); }
+  .dash-md h1, .dash-md h2, .dash-md h3 { font-weight: 600; margin: 0.6em 0 0.25em; }
+  .dash-md h1 { font-size: 1.25em; } .dash-md h2 { font-size: 1.12em; } .dash-md h3 { font-size: 1.02em; }
+  .dash-md table { border-collapse: collapse; margin: 0.5em 0; }
+  .dash-md th, .dash-md td { border: 1px solid var(--d-line); padding: 3px 8px; }
+  .dash-md hr { border: 0; border-top: 1px solid var(--d-line); margin: 0.6em 0; }
+
   .dash-safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
   .dash-safe-top { padding-top: env(safe-area-inset-top); }
 

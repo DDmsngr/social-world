@@ -243,7 +243,7 @@ function ListView({ tasks }: { tasks: Task[] }) {
       <ul>
         {tasks.slice(0, shown).map(t => (
           <li key={t.id} className="dash-row flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
-            <Link to={`/dashboard/tasks/${t.id}`} className="min-w-0 flex-1 basis-56 truncate text-sm font-medium hover:underline">{t.title}</Link>
+            <Link to={`/dashboard/tasks/${t.id}`} className="min-w-0 flex-1 basis-56 truncate text-sm font-medium hover:underline"><span className="dash-muted mr-1 font-mono text-xs font-normal">#{t.num}</span>{t.title}</Link>
             <StatusChip status={t.status} />
             <PriorityChip priority={t.priority} />
             <DueLabel task={t} />

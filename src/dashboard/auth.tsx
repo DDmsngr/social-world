@@ -83,8 +83,13 @@ export function WorkspaceProvider({ session, children }: { session: Session; chi
         keys.forEach(k => qc.invalidateQueries({ queryKey: [k] }))
       })
     on('ws_tasks', ['tasks', 'task', 'stats', 'activity'])
+    on('ws_task_labels', ['tasks', 'task'])
+    on('ws_labels', ['labels'])
+    on('ws_members', ['members'])
     on('ws_comments', ['comments', 'tasks', 'activity'])
+    on('ws_attachments', ['attachments', 'tasks', 'task', 'activity'])
     on('ws_messages', ['messages', 'unread'])
+    on('ws_conversations', ['conversations', 'unread'])
     on('ws_notifications', ['notifications'])
     ch.subscribe()
     return () => { void supabase.removeChannel(ch) }

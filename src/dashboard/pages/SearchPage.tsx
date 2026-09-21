@@ -22,7 +22,7 @@ export default function SearchPage() {
       {q.length >= 2 && (
         <QueryState loading={res.isLoading} error={res.error} onRetry={() => res.refetch()} empty={!!d && total === 0} emptyText="Ничего не найдено">
           <Group title="Задачи" n={d?.tasks.length ?? 0}>
-            {d?.tasks.map(t => <li key={t.id} className="dash-row py-2"><Link className="text-sm hover:underline" to={`/dashboard/tasks/${t.id}`}>{t.title}</Link> <span className="dash-muted text-xs">{statusMeta(t.status).label}</span></li>)}
+            {d?.tasks.map(t => <li key={t.id} className="dash-row py-2"><Link className="text-sm hover:underline" to={`/dashboard/tasks/${t.id}`}>#{t.num} {t.title}</Link> <span className="dash-muted text-xs">{statusMeta(t.status).label}</span></li>)}
           </Group>
           <Group title="Люди" n={d?.members.length ?? 0}>
             {d?.members.map(m => <li key={m.user_id} className="dash-row py-2"><Link className="text-sm hover:underline" to={`/dashboard/team/${m.user_id}`}>{m.name}</Link> <span className="dash-muted text-xs">{m.email}</span></li>)}
