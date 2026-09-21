@@ -33,12 +33,14 @@ function useFilters() {
     q: sp.get('q') ?? undefined,
     sort: (sp.get('sort') as TaskFilters['sort']) ?? 'priority',
   }
-  const set = (k: string, v: string) => {
-    const next = new URLSearchParams(sp)
+  // функциональная форма: отложенное обновление (дебаунс поиска) не должно затирать
+  // фильтр, выставленный за эти 300 мс, устаревшей копией параметров
+  const set = (k: string, v: string) => setSp(prev => {
+    const next = new URLSearchParams(prev)
     if (v) next.set(k, v); else next.delete(k)
-    setSp(next, { replace: true })
-  }
-  const clear = () => setSp(new URLSearchParams(sp.get('view') ? { view: sp.get('view')! } : {}), { replace: true })
+    return next
+  }, { replace: true })
+  const clear = () => setSp(prev => new URLSearchParams(prev.get('view') ? { view: prev.get('view')! } : {}), { replace: true })
   const active = ['status', 'priority', 'assignee', 'label', 'due', 'q'].some(k => sp.get(k))
   return { filters, set, clear, active, view: sp.get('view') === 'list' ? 'list' : 'board' } as const
 }
