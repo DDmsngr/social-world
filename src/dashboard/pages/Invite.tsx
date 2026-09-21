@@ -15,7 +15,6 @@ export default function Invite() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [notice, setNotice] = useState('')
   const [accepting, setAccepting] = useState(false)
 
   const preview = useQuery({
@@ -37,11 +36,20 @@ export default function Invite() {
     if (!inv) return
     setBusy(true)
     setError('')
-    const creds = { email: inv.email, password }
-    const res = mode === 'signup' ? await supabase.auth.signUp(creds) : await supabase.auth.signInWithPassword(creds)
+    if (mode === 'signup') {
+      // письма подтверждения на сервере не работают: аккаунт создаёт функция БД
+      // по токену приглашения (токен и подтверждает владение почтой)
+      const reg = await supabase.rpc('ws_register_via_invitation', { p_token: token, p_password: password })
+      if (reg.error) {
+        setBusy(false)
+        setError(reg.error.message)
+        if (reg.error.message.includes('уже есть')) setMode('login')
+        return
+      }
+    }
+    const res = await supabase.auth.signInWithPassword({ email: inv.email, password })
     setBusy(false)
-    if (res.error) setError(res.error.message)
-    else if (!res.data.session) setNotice('Аккаунт создан, но сервер требует подтверждения email. Подтвердите почту и вернитесь по этой же ссылке.')
+    if (res.error) setError(res.error.message === 'Invalid login credentials' ? 'Неверный пароль' : res.error.message)
   }
 
   return (
@@ -67,12 +75,11 @@ export default function Invite() {
                     <Field label="Email (из приглашения)">
                       <input className="dash-input opacity-70" value={inv.email} readOnly aria-readonly />
                     </Field>
-                    <Field label={mode === 'signup' ? 'Придумайте пароль' : 'Пароль'} hint={mode === 'signup' ? 'Не короче 6 символов' : undefined}>
-                      <input className="dash-input" type="password" minLength={6} required value={password}
+                    <Field label={mode === 'signup' ? 'Придумайте пароль' : 'Пароль'} hint={mode === 'signup' ? 'Не короче 8 символов' : undefined}>
+                      <input className="dash-input" type="password" minLength={mode === 'signup' ? 8 : undefined} required value={password}
                         autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} onChange={e => setPassword(e.target.value)} />
                     </Field>
                     {error && <p role="alert" className="text-sm text-[var(--d-tint)]">{error}</p>}
-                    {notice && <p role="status" className="text-sm">{notice}</p>}
                     <button className="dash-btn w-full" disabled={busy}>
                       {mode === 'signup' ? 'Создать аккаунт и войти' : 'Войти и принять'}
                     </button>
