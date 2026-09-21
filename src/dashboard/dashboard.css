@@ -1,0 +1,67 @@
+/* Стили внутреннего dashboard. Грузятся только вместе с ленивым чанком /dashboard. */
+@layer components {
+  .dash {
+    --d-bg: #151417;
+    --d-surface: #211f22;
+    --d-raised: #2a272b;
+    --d-line: #403b3e;
+    --d-text: #e7e4e2;
+    --d-muted: #aaa5a6;
+    --d-primary: #7a2436;
+    --d-primary-hover: #963148;
+    --d-tint: #c4677c;
+    --d-ok: #4fa77a;
+    --d-warn: #d9a441;
+    --d-info: #6e9bc4;
+    background: var(--d-bg);
+    color: var(--d-text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100dvh;
+  }
+
+  .dash *:focus-visible {
+    outline: 2px solid var(--d-tint);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  .dash-card { background: var(--d-surface); border: 1px solid var(--d-line); border-radius: 14px; }
+  .dash-muted { color: var(--d-muted); }
+  .dash-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--d-muted); font-weight: 600; }
+
+  .dash-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 40px; padding: 0 16px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    background: var(--d-primary); color: #fff; border: 1px solid transparent;
+    transition: background .15s, opacity .15s; cursor: pointer;
+  }
+  .dash-btn:hover:not(:disabled) { background: var(--d-primary-hover); }
+  .dash-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .dash-btn-ghost { background: transparent; color: var(--d-text); border-color: var(--d-line); }
+  .dash-btn-ghost:hover:not(:disabled) { background: var(--d-raised); }
+  .dash-btn-sm { min-height: 32px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+
+  .dash-input {
+    width: 100%; min-height: 42px; padding: 0 12px; border-radius: 10px; font-size: 14px;
+    background: var(--d-bg); color: var(--d-text); border: 1px solid var(--d-line);
+  }
+  textarea.dash-input { padding: 10px 12px; min-height: 84px; resize: vertical; }
+  .dash-input::placeholder { color: #7d777a; }
+  .dash-input:focus { border-color: var(--d-tint); outline: none; }
+  select.dash-input { appearance: none; padding-right: 28px; background-image: linear-gradient(45deg, transparent 50%, var(--d-muted) 50%), linear-gradient(135deg, var(--d-muted) 50%, transparent 50%); background-position: calc(100% - 15px) 18px, calc(100% - 10px) 18px; background-size: 5px 5px; background-repeat: no-repeat; }
+
+  .dash-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; border: 1px solid var(--d-line); color: var(--d-muted); white-space: nowrap;
+  }
+
+  .dash-row { border-bottom: 1px solid rgba(64, 59, 62, .55); }
+  .dash-row:last-child { border-bottom: 0; }
+
+  .dash-safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .dash-safe-top { padding-top: env(safe-area-inset-top); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dash * { transition: none !important; animation: none !important; }
+  }
+}
