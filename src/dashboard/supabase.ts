@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+// trim: лишний перевод строки или BOM в переменной ломают заголовки fetch
+const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim()
+const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim()
 
 export const isConfigured = Boolean(url && anonKey)
 
