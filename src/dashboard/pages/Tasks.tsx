@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -33,14 +33,17 @@ function useFilters() {
     q: sp.get('q') ?? undefined,
     sort: (sp.get('sort') as TaskFilters['sort']) ?? 'priority',
   }
-  // функциональная форма: отложенное обновление (дебаунс поиска) не должно затирать
-  // фильтр, выставленный за эти 300 мс, устаревшей копией параметров
-  const set = (k: string, v: string) => setSp(prev => {
+  // setSp из React Router базируется на параметрах того рендера, где он создан.
+  // Отложенный вызов (дебаунс поиска) иначе затрёр бы фильтр, выставленный за эти
+  // 300 мс, — поэтому всегда берём setSp из последнего рендера через ref.
+  const latest = useRef(setSp)
+  latest.current = setSp
+  const set = (k: string, v: string) => latest.current(prev => {
     const next = new URLSearchParams(prev)
     if (v) next.set(k, v); else next.delete(k)
     return next
   }, { replace: true })
-  const clear = () => setSp(prev => new URLSearchParams(prev.get('view') ? { view: prev.get('view')! } : {}), { replace: true })
+  const clear = () => latest.current(prev => new URLSearchParams(prev.get('view') ? { view: prev.get('view')! } : {}), { replace: true })
   const active = ['status', 'priority', 'assignee', 'label', 'due', 'q'].some(k => sp.get(k))
   return { filters, set, clear, active, view: sp.get('view') === 'list' ? 'list' : 'board' } as const
 }
