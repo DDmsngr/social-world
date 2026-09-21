@@ -62,7 +62,10 @@ test('перетаскивание между колонками меняет с
   await page.mouse.down()
   await page.mouse.move(from!.x + 30, from!.y + 20, { steps: 5 })
   await page.mouse.move(to!.x + to!.width / 2, to!.y + 60, { steps: 15 })
+  // без ожидания ответа reload на быстром CI обрывает запрос сохранения, и в БД ничего не попадает
+  const saved = page.waitForResponse(r => r.url().includes('/rest/v1/ws_tasks') && r.request().method() === 'PATCH')
   await page.mouse.up()
+  expect((await saved).ok()).toBe(true)
   await expect(page.getByTestId('col-review').getByText(title)).toBeVisible()
   await page.reload()
   await expect(page.getByTestId('col-review').getByText(title)).toBeVisible()
