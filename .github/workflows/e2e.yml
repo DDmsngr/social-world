@@ -1,0 +1,64 @@
+name: E2E
+
+# Playwright против РЕАЛЬНОГО бэкенда (Supabase), в тестовом workspace e2e-sandbox.
+# Гоняется в GitHub, а не на ноутбуке. Без секретов E2E_* проходят только публичные
+# тесты, сценарии с логином честно пропускаются.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+
+# Тесты делят одну песочницу: два прогона одновременно испортили бы друг другу данные.
+concurrency:
+  group: e2e
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_MEMBER_EMAIL: ${{ secrets.E2E_MEMBER_EMAIL }}
+      E2E_MEMBER_PASSWORD: ${{ secrets.E2E_MEMBER_PASSWORD }}
+      E2E_MEMBER_NAME: ${{ secrets.E2E_MEMBER_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24' # unit-тесты читают .ts напрямую (нужен встроенный strip-types)
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx tsc -b
+
+      - name: Unit-тесты разбора JSON
+        run: node --test e2e/taskJson.test.mjs
+
+      - name: Build
+        run: npm run build
+
+      - name: Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E (desktop и mobile)
+        run: npx playwright test --reporter=list,github
+
+      - name: Отчёт и трейсы при падении
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7

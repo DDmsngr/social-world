@@ -11,6 +11,7 @@ import { useWorkspace } from '../auth'
 import { PRIORITIES, STATUSES } from '../meta'
 import type { Priority, Task, TaskFilters, TaskStatus } from '../types'
 import { Avatar, PageHeader, QueryState, useToast } from '../ui'
+import TasksIO from '../TasksIO'
 import { CreateTaskModal, DueLabel, PriorityChip, StatusChip, TaskCardBody, useTaskUpdate } from '../taskParts'
 
 const SORTS: { id: TaskFilters['sort']; label: string }[] = [
@@ -77,6 +78,7 @@ export default function Tasks() {
                 <List className="h-4 w-4" aria-hidden /> Список
               </button>
             </div>
+            <TasksIO exportTasks={tasks.data ?? []} />
             {isAdmin && (
               <button className="dash-btn" onClick={() => setCreateStatus('todo')}>
                 <Plus className="h-4 w-4" aria-hidden /> Новая задача

@@ -125,6 +125,17 @@ export async function updateTask(id: string, patch: TaskPatch) {
   if (rows.length === 0) throw new Error('Нет прав на изменение этой задачи')
 }
 
+export interface ImportPayload {
+  title: string; description: string; status: TaskStatus; priority: Task['priority']
+  assignee_id: string | null; due_date: string | null; labels: string[]
+}
+
+/** Пакетное создание одной транзакцией: либо все задачи, либо ни одной. */
+export async function importTasks(projectId: string, rows: ImportPayload[]) {
+  return check(await supabase.rpc('ws_import_tasks', { p_project: projectId, p_tasks: rows })) as
+    { id: string; num: number; title: string }[]
+}
+
 /** Взять свободную задачу: атомарно на стороне БД, двое одновременно не возьмут. */
 export async function claimTask(id: string) {
   check(await supabase.rpc('ws_claim_task', { p_task: id }))
