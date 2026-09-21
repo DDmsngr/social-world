@@ -80,7 +80,9 @@ export function describeActivity(e: ActivityEvent, byUser: (id: string | null) =
     case 'task.status': return `${who} изменил(а) статус ${title}: ${st(m.from)} → ${st(m.to)}`
     case 'task.assigned': {
       const to = m.to ? byUser(m.to)?.name ?? 'участника' : null
-      return to ? `${who} назначил(а) ${title} на ${to}` : `${who} снял(а) исполнителя с ${title}`
+      if (m.to && m.to === e.actor_id) return `${who} взял(а) в работу ${title}`
+      if (!m.to && m.from && m.from === e.actor_id) return `${who} отказался(лась) от ${title}`
+      return to ?`${who} назначил(а) ${title} на ${to}` : `${who} снял(а) исполнителя с ${title}`
     }
     case 'task.priority': return `${who} изменил(а) приоритет ${title}: ${pr(m.from)} → ${pr(m.to)}`
     case 'task.due': return `${who} изменил(а) срок ${title}: ${fmtDate(m.from)} → ${fmtDate(m.to)}`

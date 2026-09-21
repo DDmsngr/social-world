@@ -125,6 +125,15 @@ export async function updateTask(id: string, patch: TaskPatch) {
   if (rows.length === 0) throw new Error('Нет прав на изменение этой задачи')
 }
 
+/** Взять свободную задачу: атомарно на стороне БД, двое одновременно не возьмут. */
+export async function claimTask(id: string) {
+  check(await supabase.rpc('ws_claim_task', { p_task: id }))
+}
+
+export async function releaseTask(id: string) {
+  check(await supabase.rpc('ws_release_task', { p_task: id }))
+}
+
 export async function setTaskLabels(taskId: string, labelIds: string[]) {
   check(await supabase.from('ws_task_labels').delete().eq('task_id', taskId))
   if (labelIds.length) {

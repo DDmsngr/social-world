@@ -7,7 +7,7 @@ import { supabase } from '../supabase'
 import type { Message, Task } from '../types'
 import { Avatar, PageHeader, QueryState } from '../ui'
 import { ActivityList } from '../shared'
-import { DueLabel, PriorityChip, StatusChip } from '../taskParts'
+import { ClaimButton, DueLabel, PriorityChip, StatusChip } from '../taskParts'
 
 const TILES: { key: string; label: string; to: string; color: string }[] = [
   { key: 'total', label: 'Всего', to: '/dashboard/tasks', color: '#e7e4e2' },
@@ -43,6 +43,7 @@ export default function Home() {
   const mine = all.filter(t => t.assignee_id === userId && t.status !== 'done')
   const soon = all.filter(t => t.due_date && t.status !== 'done' && t.due_date >= todayIso() && t.due_date <= plusDaysIso(7))
     .sort((a, b) => a.due_date!.localeCompare(b.due_date!))
+  const free = all.filter(t => !t.assignee_id && t.status !== 'done')
   const blocked = all.filter(t => t.status === 'blocked')
   const overdue = all.filter(t => t.due_date && t.status !== 'done' && t.due_date < todayIso())
   const people = members.filter(m => m.status === 'active' && m.user_id)
@@ -70,6 +71,23 @@ export default function Home() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
+        <div className="lg:col-span-2">
+          <Panel title={`Свободные задачи · ${free.length}`} action={<Link to="/dashboard/tasks?assignee=none" className="dash-muted text-xs underline">Все свободные</Link>}>
+            <QueryState loading={tasks.isLoading} error={tasks.error} onRetry={() => tasks.refetch()} empty={free.length === 0} emptyText="Свободных задач нет" emptyHint="Задачи без исполнителя может взять любой участник — они появятся здесь.">
+              <ul data-testid="free-tasks">
+                {free.slice(0, 6).map(t => (
+                  <li key={t.id} className="dash-row flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5">
+                    <Link to={`/dashboard/tasks/${t.id}`} className="min-w-0 flex-1 basis-44 truncate text-sm font-medium hover:underline"><span className="dash-muted mr-1 font-mono text-xs font-normal">#{t.num}</span>{t.title}</Link>
+                    <PriorityChip priority={t.priority} />
+                    {t.due_date && <DueLabel task={t} />}
+                    <ClaimButton task={t} compact />
+                  </li>
+                ))}
+              </ul>
+            </QueryState>
+          </Panel>
+        </div>
+
         <Panel title="Мои задачи">
           <QueryState loading={tasks.isLoading} error={tasks.error} onRetry={() => tasks.refetch()} empty={mine.length === 0} emptyText="На вас ничего не назначено">
             <TaskRows tasks={mine.slice(0, 6)} />

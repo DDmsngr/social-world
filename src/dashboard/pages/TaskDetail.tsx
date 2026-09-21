@@ -12,7 +12,7 @@ import type { Attachment, Priority, TaskComment, TaskStatus } from '../types'
 import { Avatar, DateInput, Field, QueryState, errMsg, useToast } from '../ui'
 import Md from '../Md'
 import { ActivityList, FileList, UploadButton } from '../shared'
-import { LabelChips, PriorityChip, StatusChip, useTaskUpdate } from '../taskParts'
+import { ClaimButton, LabelChips, PriorityChip, StatusChip, useTaskUpdate } from '../taskParts'
 
 export default function TaskDetail() {
   const { id = '' } = useParams()
@@ -80,7 +80,9 @@ export default function TaskDetail() {
               )}
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <StatusChip status={t.status} /><PriorityChip priority={t.priority} /><LabelChips ids={t.label_ids} />
+                {!t.assignee_id && t.status !== 'done' && <span className="dash-chip">Свободна</span>}
               </div>
+              <div className="mt-3"><ClaimButton task={t} /></div>
             </div>
 
             <section aria-label="Параметры" className="dash-card mb-5 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">

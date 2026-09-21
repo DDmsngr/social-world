@@ -258,6 +258,55 @@ test('автообновление: изменение одного пользо
   await expect(a.getByTestId('comments')).toContainText('живой комментарий', { timeout: 30_000 })
 })
 
+test('свободная задача: участник берёт её одним щелчком, она закрепляется за ним', async ({ browser }) => {
+  test.skip(!memberOk, 'нет E2E_MEMBER_*')
+  const a = await browser.newPage({ baseURL: test.info().project.use.baseURL })
+  const m = await browser.newPage({ baseURL: test.info().project.use.baseURL })
+  await admin(a); await member(m)
+  const free = `Свободная ${Date.now()}`
+
+  // админ нарезает задачу, никого не назначая
+  await a.goto('dashboard/tasks')
+  await a.getByRole('button', { name: 'Новая задача' }).click()
+  const dlg = a.getByRole('dialog')
+  await dlg.getByLabel('Название').fill(free)
+  await dlg.getByRole('button', { name: 'Создать задачу' }).click()
+  await expect(a.getByTestId('col-todo').getByText(free)).toBeVisible()
+
+  // участник видит её среди свободных на обзоре и берёт
+  await m.goto('dashboard')
+  const row = m.getByTestId('free-tasks').locator('li', { hasText: free })
+  await expect(row).toBeVisible({ timeout: 30_000 })
+  await row.getByRole('button', { name: 'Взять' }).click()
+  await expect(row).toHaveCount(0)
+
+  // на доске задача в «In Progress» и за участником; сохранилось после перезагрузки
+  await m.goto('dashboard/tasks')
+  await expect(m.getByTestId('col-in_progress').getByText(free)).toBeVisible()
+  await m.getByRole('link', { name: free }).click()
+  await expect(m.getByLabel('Исполнитель')).toHaveValue(/.+/)
+  await expect(m.getByRole('button', { name: 'Отказаться от задачи' })).toBeVisible()
+  await m.reload()
+  await expect(m.getByLabel('Статус')).toHaveValue('in_progress')
+
+  // админ (создатель) видит новое закрепление без перезагрузки, в журнале «взял(а) в работу»
+  await a.getByRole('link', { name: free }).click()
+  await expect(a.getByTestId('activity')).toContainText('взял(а) в работу', { timeout: 30_000 })
+  await expect(a.getByLabel('Исполнитель')).not.toHaveValue('')
+
+  // занятую задачу взять нельзя: кнопки «Взять» больше нет
+  await expect(a.getByRole('button', { name: 'Взять' })).toHaveCount(0)
+
+  // участник отказывается: задача снова свободна и уходит в To Do
+  await m.getByRole('button', { name: 'Отказаться от задачи' }).click()
+  await expect(m.getByLabel('Статус')).toHaveValue('todo')
+  await expect(m.getByRole('button', { name: 'Взять' })).toBeVisible()
+
+  // уборка
+  a.once('dialog', d => d.accept())
+  await a.getByRole('button', { name: 'Архивировать' }).click()
+})
+
 test('обзор показывает счётчики; мобильная вёрстка без горизонтальной прокрутки', async ({ page }) => {
   await admin(page)
   await expect(page.getByTestId('stat-total')).toBeVisible()

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CalendarDays, MessageSquare, Paperclip } from 'lucide-react'
-import { createTask, updateTask, type TaskPatch } from './api'
+import { claimTask, createTask, releaseTask, updateTask, type TaskPatch } from './api'
 import { useWorkspace } from './auth'
 import { PRIORITIES, STATUSES, fmtDate, isOverdue, priorityMeta, statusMeta, todayIso } from './meta'
 import type { Priority, Task, TaskStatus } from './types'
@@ -44,15 +44,52 @@ export function LabelChips({ ids }: { ids: string[] }) {
   )
 }
 
+/**
+ * «Взять в работу» / «Отказаться»: свободную задачу забирает любой участник,
+ * она закрепляется за ним. Внутри перетаскиваемой карточки события не должны
+ * доходить до dnd-kit (иначе клик или Enter начнут drag).
+ */
+export function ClaimButton({ task, compact }: { task: Pick<Task, 'id' | 'assignee_id' | 'status'>; compact?: boolean }) {
+  const { userId } = useWorkspace()
+  const qc = useQueryClient()
+  const toast = useToast()
+  const mine = task.assignee_id === userId
+  const free = !task.assignee_id && task.status !== 'done'
+  const done = () => {
+    for (const k of ['tasks', 'task', 'stats', 'activity', 'notifications']) qc.invalidateQueries({ queryKey: [k] })
+  }
+  const claim = useMutation({
+    mutationFn: () => claimTask(task.id),
+    onSuccess: () => { toast('Задача закреплена за вами'); done() },
+    onError: e => { toast(errMsg(e), 'error'); done() },
+  })
+  const release = useMutation({
+    mutationFn: () => releaseTask(task.id),
+    onSuccess: () => { toast('Вы отказались от задачи, она снова свободна'); done() },
+    onError: e => toast(errMsg(e), 'error'),
+  })
+  const stop = { onPointerDown: (e: React.SyntheticEvent) => e.stopPropagation(), onKeyDown: (e: React.SyntheticEvent) => e.stopPropagation() }
+  const size = compact ? 'dash-btn-sm !min-h-7 !px-2.5' : 'dash-btn-sm'
+
+  if (free) {
+    return <button type="button" className={`dash-btn ${size}`} disabled={claim.isPending} onClick={() => claim.mutate()} {...stop}>Взять</button>
+  }
+  if (mine && task.status !== 'done' && !compact) {
+    return <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm" disabled={release.isPending} onClick={() => release.mutate()} {...stop}>Отказаться от задачи</button>
+  }
+  return null
+}
+
 export function TaskCardBody({ task }: { task: Task }) {
   const { byUser } = useWorkspace()
+  const free = !task.assignee_id && task.status !== 'done'
   return (
     <>
       <div className="flex items-start justify-between gap-2">
         <Link to={`/dashboard/tasks/${task.id}`} draggable={false} className="text-sm font-medium leading-snug hover:underline">
           <span className="dash-muted mr-1 font-mono text-xs font-normal">#{task.num}</span>{task.title}
         </Link>
-        <Avatar member={byUser(task.assignee_id)} size={24} />
+        {free ? <ClaimButton task={task} compact /> : <Avatar member={byUser(task.assignee_id)} size={24} />}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <PriorityChip priority={task.priority} />
