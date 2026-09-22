@@ -13,6 +13,7 @@
     --d-ok: #75c9a5;
     --d-warn: #e6c98a;
     --d-info: #d8b56a;
+    --d-champagne: #e6c98a;
     background: var(--d-bg);
     color: var(--d-text);
     font-family: 'Inter', sans-serif;
@@ -40,6 +41,10 @@
   .dash-btn-ghost { background: transparent; color: var(--d-text); border-color: var(--d-line); }
   .dash-btn-ghost:hover:not(:disabled) { background: var(--d-raised); }
   .dash-btn-sm { min-height: 32px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+
+  /* Выбранное/активное состояние (вкладки, переключатели) — шампань, а не
+     розовый: розовый занят под действие (кнопки, лайки). */
+  .dash-tab-active { background: var(--d-champagne); color: var(--d-bg); }
 
   .dash-input {
     width: 100%; min-height: 42px; padding: 0 12px; border-radius: 10px; font-size: 14px;

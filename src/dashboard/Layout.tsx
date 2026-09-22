@@ -48,7 +48,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           {NAV.map(n => (
             <NavLink key={n.to} to={n.to} end={n.end}
               className={({ isActive }) => `flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors ${isActive
-                ? 'bg-[var(--d-primary)] text-white' : 'text-[var(--d-muted)] hover:bg-[var(--d-raised)] hover:text-[var(--d-text)]'}`}>
+                ? 'bg-[var(--d-champagne)] text-[#21151d]' : 'text-[var(--d-muted)] hover:bg-[var(--d-raised)] hover:text-[var(--d-text)]'}`}>
               <n.icon className="h-4 w-4" aria-hidden />
               <span className="flex-1">{n.label}</span>
               {badge(n.to) > 0 && (
@@ -96,7 +96,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <nav aria-label="Навигация" className="dash-safe-bottom fixed inset-x-0 bottom-0 z-40 flex border-t border-[var(--d-line)] bg-[var(--d-surface)] md:hidden">
           {NAV.map(n => (
             <NavLink key={n.to} to={n.to} end={n.end}
-              className={({ isActive }) => `relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${isActive ? 'text-[var(--d-tint)]' : 'text-[var(--d-muted)]'}`}>
+              className={({ isActive }) => `relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${isActive ? 'text-[var(--d-champagne)]' : 'text-[var(--d-muted)]'}`}>
               <n.icon className="h-5 w-5" aria-hidden />
               {n.label}
               {badge(n.to) > 0 && <span className="absolute right-[22%] top-1.5 rounded-full bg-[var(--d-tint)] px-1.5 text-[10px] font-bold text-[#21151d]">{badge(n.to)}</span>}

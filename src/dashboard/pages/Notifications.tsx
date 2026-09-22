@@ -51,10 +51,10 @@ export default function Notifications() {
           const n = unreadIn(t.id).length
           return (
             <button key={t.id} role="tab" aria-selected={tab === t.id} id={`tab-${t.id}`} aria-controls="notif-panel"
-              className={`dash-btn dash-btn-sm ${tab === t.id ? '' : 'dash-btn-ghost'}`}
+              className={`dash-btn dash-btn-sm ${tab === t.id ? 'dash-tab-active' : 'dash-btn-ghost'}`}
               onClick={() => setSp(t.id === 'personal' ? {} : { tab: t.id }, { replace: true })}>
               {t.label}
-              {n > 0 && <span className={`rounded-full px-1.5 text-[11px] font-bold ${tab === t.id ? 'bg-white/25' : 'bg-[var(--d-tint)] text-[#21151d]'}`}
+              {n > 0 && <span className={`rounded-full px-1.5 text-[11px] font-bold ${tab === t.id ? 'bg-black/20' : 'bg-[var(--d-tint)] text-[#21151d]'}`}
                 aria-label={`${n} непрочитанных`}>{n}</span>}
             </button>
           )

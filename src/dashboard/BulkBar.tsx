@@ -80,7 +80,7 @@ export default function BulkBar({ tasks }: { tasks: Task[] }) {
   const busy = quickStatus.isPending || claimAll.isPending || releaseAll.isPending || archive.isPending || del.isPending
 
   return (
-    <div className="sticky top-16 z-20 mb-4 rounded-xl border border-[var(--d-tint)] bg-[var(--d-raised)] p-3 shadow-lg" role="toolbar" aria-label="Массовые действия">
+    <div className="sticky top-16 z-20 mb-4 rounded-xl border border-[var(--d-champagne)] bg-[var(--d-raised)] p-3 shadow-lg" role="toolbar" aria-label="Массовые действия">
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-semibold" aria-live="polite">Выбрано: {pluralTasks(selTasks.length)}</span>
         <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm" onClick={clear}>

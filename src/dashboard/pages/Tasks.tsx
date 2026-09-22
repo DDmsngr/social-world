@@ -236,7 +236,7 @@ function Column({ status, tasks, canMove, onCreate }: {
   const { setNodeRef, isOver } = useDroppable({ id: status })
   return (
     <section ref={setNodeRef} aria-label={meta.label} data-testid={`col-${status}`}
-      className={`flex w-[78vw] max-w-72 shrink-0 snap-center flex-col rounded-2xl border bg-[var(--d-surface)] p-2.5 md:w-64 md:max-w-none xl:flex-1 xl:min-w-52 ${isOver ? 'border-[var(--d-tint)]' : 'border-[var(--d-line)]'}`}>
+      className={`flex w-[78vw] max-w-72 shrink-0 snap-center flex-col rounded-2xl border bg-[var(--d-surface)] p-2.5 md:w-64 md:max-w-none xl:flex-1 xl:min-w-52 ${isOver ? 'border-[var(--d-champagne)]' : 'border-[var(--d-line)]'}`}>
       <div className="mb-2 flex items-center justify-between px-1">
         <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
           <span className="h-2 w-2 rounded-full" style={{ background: meta.color }} aria-hidden />
@@ -276,7 +276,7 @@ function Card({ task, movable }: { task: Task; movable: boolean }) {
       {...select.handlers} {...(movable ? drag.attributes : {})} {...dragListeners} onPointerDown={onPointerDown}
       aria-roledescription={movable ? 'перетаскиваемая задача' : undefined}
       aria-selected={select.mode ? select.isSelected : undefined}
-      className={`dash-card touch-manipulation bg-[var(--d-raised)] p-3 ${movable ? 'cursor-grab' : ''} ${drag.isDragging ? 'opacity-30' : ''} ${select.isSelected ? 'ring-2 ring-[var(--d-tint)]' : ''}`}>
+      className={`dash-card touch-manipulation bg-[var(--d-raised)] p-3 ${movable ? 'cursor-grab' : ''} ${drag.isDragging ? 'opacity-30' : ''} ${select.isSelected ? 'ring-2 ring-[var(--d-champagne)]' : ''}`}>
       {select.mode ? (
         <div className="flex items-start gap-2">
           <SelectMark checked={select.isSelected} />
