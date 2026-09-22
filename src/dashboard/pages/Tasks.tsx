@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEventHandler } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -172,7 +172,6 @@ function Board({ tasks, onCreate, isTouch }: { tasks: Task[]; onCreate?: (s: Tas
   const { isAdmin, userId } = useWorkspace()
   const update = useTaskUpdate()
   const toast = useToast()
-  const { mode: selecting } = useTaskSelectionCtx()
   const [dragging, setDragging] = useState<Task | null>(null)
 
   // dnd-kit нужны одни и те же хуки на каждом рендере — переключаем только состав массива
@@ -188,9 +187,8 @@ function Board({ tasks, onCreate, isTouch }: { tasks: Task[]; onCreate?: (s: Tas
     return m
   }, [tasks])
 
-  // на тачскрине долгий тап входит в выбор — drag ему не мешает, он просто выключен;
-  // пока идёт выбор, перетаскивание тоже выключено (иначе конфликтует с тапом-выбором)
-  const canMove = (t: Task) => !isTouch && !selecting && (isAdmin || t.assignee_id === userId)
+  // на тачскрине drag выключен целиком — конфликтует с долгим тапом (см. useIsCoarsePointer)
+  const canMove = (t: Task) => !isTouch && (isAdmin || t.assignee_id === userId)
 
   const onDragEnd = (e: DragEndEvent) => {
     setDragging(null)
@@ -262,9 +260,20 @@ function Card({ task, movable }: { task: Task; movable: boolean }) {
   const drag = useDraggable({ id: task.id, disabled: !movable })
   const drop = useDroppable({ id: task.id })
   const select = useTaskSelectGesture(task.id)
+  // dnd-kit вешает role="button" aria-disabled="true" на карточку, даже когда
+  // перетаскивание выключено (disabled: true), — а aria-disabled на предке блокирует
+  // клики по вложенным ссылкам/кнопкам (проверяется и Playwright, и реальными
+  // скринридерами). Поэтому атрибуты и обработчики drag добавляем, только когда
+  // карточку действительно можно тащить, а onPointerDown сводим явно — оба
+  // обработчика используют один и тот же проп, порядок спреда тут ненадёжен.
+  const dragListeners = movable ? drag.listeners : undefined
+  const onPointerDown: PointerEventHandler<HTMLLIElement> = e => {
+    select.handlers.onPointerDown(e)
+    dragListeners?.onPointerDown?.(e)
+  }
   return (
     <li ref={n => { drag.setNodeRef(n); drop.setNodeRef(n) }} data-testid={`card-${task.id}`}
-      {...select.handlers} {...drag.attributes} {...drag.listeners}
+      {...select.handlers} {...(movable ? drag.attributes : {})} {...dragListeners} onPointerDown={onPointerDown}
       aria-roledescription={movable ? 'перетаскиваемая задача' : undefined}
       aria-selected={select.mode ? select.isSelected : undefined}
       className={`dash-card touch-manipulation bg-[var(--d-raised)] p-3 ${movable ? 'cursor-grab' : ''} ${drag.isDragging ? 'opacity-30' : ''} ${select.isSelected ? 'ring-2 ring-[var(--d-tint)]' : ''}`}>
