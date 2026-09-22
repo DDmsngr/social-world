@@ -1,7 +1,10 @@
-import { useState, type FormEvent } from 'react'
+import {
+  createContext, useContext, useMemo, useRef, useState,
+  type FormEvent, type MouseEvent, type PointerEvent, type ReactNode,
+} from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, MessageSquare, Paperclip } from 'lucide-react'
+import { CalendarDays, Check, MessageSquare, Paperclip } from 'lucide-react'
 import { claimTask, createTask, releaseTask, updateTask, type TaskPatch } from './api'
 import { useWorkspace } from './auth'
 import { PRIORITIES, STATUSES, fmtDate, isOverdue, priorityMeta, statusMeta, todayIso } from './meta'
@@ -41,6 +44,91 @@ export function LabelChips({ ids }: { ids: string[] }) {
         <span key={l!.id} className="dash-chip" style={{ color: l!.color, borderColor: l!.color + '66' }}>{l!.name}</span>
       ))}
     </>
+  )
+}
+
+// ── множественный выбор задач ───────────────────────────────────────────────
+//
+// Ctrl/Cmd+клик (десктоп) и долгий тап → обычный тап (мобильный) переключают
+// задачу в выборку вместо перехода на её страницу. Состояние живёт в контексте,
+// который оборачивает страницу «Задачи» целиком — так выбор переживает
+// переключение доска/список и пропадает при уходе со страницы (размонтирование).
+
+interface TaskSelectionApi {
+  selected: Set<string>
+  /** режим выбора включён, пока в выборке есть хоть одна задача */
+  mode: boolean
+  enter: (id: string) => void
+  toggle: (id: string) => void
+  clear: () => void
+}
+const TaskSelectionCtx = createContext<TaskSelectionApi | null>(null)
+
+export function TaskSelectionProvider({ children }: { children: ReactNode }) {
+  const [selected, setSelected] = useState<Set<string>>(() => new Set())
+  const api = useMemo<TaskSelectionApi>(() => ({
+    selected,
+    mode: selected.size > 0,
+    enter: id => setSelected(new Set([id])),
+    toggle: id => setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    }),
+    clear: () => setSelected(new Set()),
+  }), [selected])
+  return <TaskSelectionCtx.Provider value={api}>{children}</TaskSelectionCtx.Provider>
+}
+
+export function useTaskSelectionCtx() {
+  const v = useContext(TaskSelectionCtx)
+  if (!v) throw new Error('useTaskSelectionCtx вне TaskSelectionProvider')
+  return v
+}
+
+const LONG_PRESS_MS = 450
+const LONG_PRESS_TOLERANCE_PX = 10
+
+/**
+ * Жест для одной задачи. Долгий тап пальцем входит в режим выбора; в остальных
+ * случаях клик перехватывается на фазе capture — раньше, чем сработает переход
+ * по ссылке или, на доске, чем dnd-kit начнёт перетаскивание.
+ */
+export function useTaskSelectGesture(taskId: string) {
+  const { mode, selected, enter, toggle } = useTaskSelectionCtx()
+  const press = useRef({ timer: 0, fired: false, x: 0, y: 0 })
+  const clearTimer = () => { if (press.current.timer) { window.clearTimeout(press.current.timer); press.current.timer = 0 } }
+
+  return {
+    isSelected: selected.has(taskId),
+    mode,
+    handlers: {
+      onPointerDown: (e: PointerEvent) => {
+        if (e.pointerType !== 'touch') return
+        press.current.fired = false
+        press.current.x = e.clientX; press.current.y = e.clientY
+        press.current.timer = window.setTimeout(() => { press.current.fired = true; enter(taskId) }, LONG_PRESS_MS)
+      },
+      onPointerMove: (e: PointerEvent) => {
+        if (!press.current.timer) return
+        if (Math.hypot(e.clientX - press.current.x, e.clientY - press.current.y) > LONG_PRESS_TOLERANCE_PX) clearTimer()
+      },
+      onPointerUp: clearTimer,
+      onPointerCancel: clearTimer,
+      onClickCapture: (e: MouseEvent) => {
+        if (press.current.fired) { e.preventDefault(); e.stopPropagation(); press.current.fired = false; return }
+        if (e.ctrlKey || e.metaKey || mode) { e.preventDefault(); e.stopPropagation(); toggle(taskId) }
+      },
+    },
+  }
+}
+
+export function SelectMark({ checked }: { checked: boolean }) {
+  return (
+    <span aria-hidden
+      className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 transition-colors ${checked ? 'border-[var(--d-tint)] bg-[var(--d-tint)]' : 'border-[var(--d-line)]'}`}>
+      {checked && <Check className="h-3.5 w-3.5 text-[#151417]" strokeWidth={3} aria-hidden />}
+    </span>
   )
 }
 

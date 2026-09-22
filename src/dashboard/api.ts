@@ -125,6 +125,45 @@ export async function updateTask(id: string, patch: TaskPatch) {
   if (rows.length === 0) throw new Error('Нет прав на изменение этой задачи')
 }
 
+/**
+ * Массовое обновление одним запросом. Один SQL UPDATE затрагивает все строки сразу:
+ * если триггер БД (правила «кто что может менять») отклонит хоть одну, откатится весь
+ * запрос — поэтому вызывающая сторона обязана заранее отфильтровать id по своим правам
+ * (см. BulkBar: участнику отправляются только его собственные задачи).
+ */
+export async function bulkUpdateTasks(ids: string[], patch: TaskPatch) {
+  if (!ids.length) return 0
+  const rows = check(await supabase.from('ws_tasks').update(patch).in('id', ids).select('id')) as unknown[]
+  return rows.length
+}
+
+export const bulkArchiveTasks = (ids: string[]) => bulkUpdateTasks(ids, { archived_at: new Date().toISOString() })
+
+/** Безвозвратное удаление. RLS пускает только админов; файлы задачи подчищаются из бакета отдельно. */
+export async function bulkDeleteTasks(ids: string[]) {
+  if (!ids.length) return { deleted: 0, filesFailed: false }
+  const atts = check(await supabase.from('ws_attachments').select('storage_path').in('task_id', ids)) as { storage_path: string }[]
+  const rows = check(await supabase.from('ws_tasks').delete().in('id', ids).select('id')) as unknown[]
+  if (rows.length === 0) throw new Error('Нет прав на удаление этих задач')
+  let filesFailed = false
+  if (atts.length) {
+    const rm = await supabase.storage.from(BUCKET).remove(atts.map(a => a.storage_path))
+    filesFailed = !!rm.error
+  }
+  return { deleted: rows.length, filesFailed }
+}
+
+export async function bulkAddLabel(ids: string[], labelId: string) {
+  if (!ids.length) return
+  check(await supabase.from('ws_task_labels')
+    .upsert(ids.map(task_id => ({ task_id, label_id: labelId })), { onConflict: 'task_id,label_id', ignoreDuplicates: true }))
+}
+
+export async function bulkRemoveLabel(ids: string[], labelId: string) {
+  if (!ids.length) return
+  check(await supabase.from('ws_task_labels').delete().eq('label_id', labelId).in('task_id', ids))
+}
+
 export interface ImportPayload {
   title: string; description: string; status: TaskStatus; priority: Task['priority']
   assignee_id: string | null; due_date: string | null; labels: string[]

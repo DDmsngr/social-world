@@ -393,6 +393,180 @@ test('импорт JSON: свободные и назначенные, ошиб�
   }
 })
 
+async function createTask(page: Page, title: string, opts: { assignee?: string; priority?: string } = {}) {
+  await page.goto('dashboard/tasks')
+  await page.getByRole('button', { name: 'Новая задача' }).click()
+  const dlg = page.getByRole('dialog')
+  await dlg.getByLabel('Название').fill(title)
+  if (opts.assignee) await dlg.getByLabel('Исполнитель').selectOption({ label: opts.assignee })
+  if (opts.priority) await dlg.getByLabel('Приоритет').selectOption(opts.priority)
+  await dlg.getByRole('button', { name: 'Создать задачу' }).click()
+  await expect(page.getByTestId('col-todo').getByText(title)).toBeVisible()
+}
+
+/** Эмулирует долгий тап пальцем: dispatchEvent, а не page.touchscreen — так тест
+ *  бьёт напрямую в обработчик onPointerDown/onClickCapture и не зависит от того,
+ *  как конкретная версия браузера транслирует реальное железо в события. */
+async function longPressSelect(locator: import('@playwright/test').Locator) {
+  const box = await locator.boundingBox()
+  if (!box) throw new Error('boundingBox() вернул null — элемент не найден на экране')
+  const x = box.x + box.width / 2, y = box.y + box.height / 2
+  await locator.dispatchEvent('pointerdown', { pointerType: 'touch', clientX: x, clientY: y, bubbles: true })
+  await locator.page().waitForTimeout(650) // дольше LONG_PRESS_MS=450 из taskParts.tsx
+  await locator.dispatchEvent('pointerup', { pointerType: 'touch', clientX: x, clientY: y, bubbles: true })
+  await locator.click() // клик, которым реальное железо обычно завершает долгий тап, — код должен его подавить
+}
+
+test('множественный выбор Ctrl+клик: счётчик, массовый перенос между колонками, снятие выбора @desktop-only', async ({ page }) => {
+  await admin(page)
+  const t1 = `E2E bulk ctrl ${Date.now()} один`, t2 = `E2E bulk ctrl ${Date.now()} два`
+  await createTask(page, t1)
+  await createTask(page, t2)
+
+  const bar = page.getByRole('toolbar', { name: 'Массовые действия' })
+  await page.getByTestId('col-todo').locator('li', { hasText: t1 }).click({ modifiers: ['Control'] })
+  await expect(bar).toContainText('Выбрано: 1 задача')
+  await expect(page).toHaveURL(/\/dashboard\/tasks$/) // Ctrl+клик не открыл задачу
+
+  await page.getByTestId('col-todo').locator('li', { hasText: t2 }).click({ modifiers: ['Control'] })
+  await expect(bar).toContainText('Выбрано: 2 задачи')
+
+  await page.getByRole('button', { name: 'Review' }).click() // чип быстрого переноса в колонку
+  await expect(page.getByTestId('col-review').locator('li', { hasText: t1 })).toBeVisible()
+  await expect(page.getByTestId('col-review').locator('li', { hasText: t2 })).toBeVisible()
+  await expect(bar).toHaveCount(0) // после действия выбор снялся сам
+
+  // уборка
+  for (const t of [t1, t2]) {
+    await page.getByTestId('col-review').locator('li', { hasText: t }).click()
+    page.once('dialog', d => d.accept())
+    await page.getByRole('button', { name: 'Архивировать' }).click()
+    await expect(page).toHaveURL(/\/dashboard\/tasks$/)
+  }
+})
+
+test('множественный выбор долгим тапом: вход в режим, добавление обычным тапом, отмена выбора', async ({ page }) => {
+  await admin(page)
+  const t1 = `E2E bulk tap ${Date.now()} один`, t2 = `E2E bulk tap ${Date.now()} два`
+  await createTask(page, t1)
+  await createTask(page, t2)
+
+  const bar = page.getByRole('toolbar', { name: 'Массовые действия' })
+  await longPressSelect(page.getByTestId('col-todo').locator('li', { hasText: t1 }))
+  await expect(bar).toContainText('Выбрано: 1 задача')
+  await expect(page).toHaveURL(/\/dashboard\/tasks$/) // долгий тап не открыл задачу
+
+  await page.getByTestId('col-todo').locator('li', { hasText: t2 }).click() // обычный тап в режиме выбора — добавляет
+  await expect(bar).toContainText('Выбрано: 2 задачи')
+  await expect(page).toHaveURL(/\/dashboard\/tasks$/)
+
+  await page.getByRole('button', { name: 'Blocked' }).click()
+  await expect(page.getByTestId('col-blocked').locator('li', { hasText: t1 })).toBeVisible()
+  await expect(page.getByTestId('col-blocked').locator('li', { hasText: t2 })).toBeVisible()
+  await expect(bar).toHaveCount(0)
+
+  // повторный долгий тап снова выбирает ровно одну — режим не залипает; «Снять выделение» работает
+  await longPressSelect(page.getByTestId('col-blocked').locator('li', { hasText: t1 }))
+  await expect(bar).toContainText('Выбрано: 1 задача')
+  await page.getByRole('button', { name: 'Снять выделение' }).click()
+  await expect(bar).toHaveCount(0)
+
+  // уборка
+  for (const t of [t1, t2]) {
+    await page.getByTestId('col-blocked').locator('li', { hasText: t }).click()
+    page.once('dialog', d => d.accept())
+    await page.getByRole('button', { name: 'Архивировать' }).click()
+    await expect(page).toHaveURL(/\/dashboard\/tasks$/)
+  }
+})
+
+test('массовые действия админа: изменить поля разом, архивировать, удалить с подтверждением', async ({ page }) => {
+  await admin(page)
+  const t1 = `E2E bulk admin ${Date.now()} один`, t2 = `E2E bulk admin ${Date.now()} два`, t3 = `E2E bulk admin ${Date.now()} три`
+  await createTask(page, t1)
+  await createTask(page, t2)
+  await createTask(page, t3)
+  const bar = page.getByRole('toolbar', { name: 'Массовые действия' })
+
+  // «Действия…»: приоритет и срок сразу на двух задачах одним применением
+  await longPressSelect(page.getByTestId('col-todo').locator('li', { hasText: t1 }))
+  await page.getByTestId('col-todo').locator('li', { hasText: t2 }).click()
+  await page.getByRole('button', { name: 'Действия…' }).click()
+  const dlg = page.getByRole('dialog')
+  await dlg.getByLabel('Приоритет').selectOption('critical')
+  await dlg.getByLabel('Срок').selectOption('set')
+  await dlg.getByLabel('Новая дата').fill('2031-06-15')
+  await dlg.getByRole('button', { name: 'Применить' }).click()
+  await expect(bar).toHaveCount(0)
+
+  await page.getByTestId('col-todo').locator('li', { hasText: t1 }).click()
+  await expect(page.getByLabel('Приоритет')).toHaveValue('critical')
+  await expect(page.getByLabel('Срок')).toHaveValue('2031-06-15')
+  await page.goto('dashboard/tasks')
+  await page.getByTestId('col-todo').locator('li', { hasText: t2 }).click()
+  await expect(page.getByLabel('Приоритет')).toHaveValue('critical')
+  await page.goto('dashboard/tasks')
+
+  // архивировать t1+t2 разом
+  await longPressSelect(page.getByTestId('col-todo').locator('li', { hasText: t1 }))
+  await page.getByTestId('col-todo').locator('li', { hasText: t2 }).click()
+  await page.getByRole('button', { name: 'Архивировать' }).click()
+  await expect(page.getByTestId('col-todo').locator('li', { hasText: t1 })).toHaveCount(0)
+  await expect(page.getByTestId('col-todo').locator('li', { hasText: t2 })).toHaveCount(0)
+  await expect(bar).toHaveCount(0)
+
+  // удалить t3: отмена ничего не меняет, подтверждение удаляет безвозвратно
+  await longPressSelect(page.getByTestId('col-todo').locator('li', { hasText: t3 }))
+  page.once('dialog', d => d.dismiss())
+  await page.getByRole('button', { name: 'Удалить' }).click()
+  await expect(page.getByTestId('col-todo').locator('li', { hasText: t3 })).toBeVisible()
+
+  page.once('dialog', d => d.accept())
+  await page.getByRole('button', { name: 'Удалить' }).click()
+  await expect(page.getByTestId('col-todo').locator('li', { hasText: t3 })).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByTestId('col-todo').locator('li', { hasText: t3 })).toHaveCount(0)
+})
+
+test('массовые действия участника: только статус для своих задач, доступно «взять»', async ({ browser }) => {
+  test.skip(!memberOk, 'нет E2E_MEMBER_*')
+  const a = await browser.newPage({ baseURL: test.info().project.use.baseURL })
+  const m = await browser.newPage({ baseURL: test.info().project.use.baseURL })
+  await admin(a); await member(m)
+  const own = `E2E bulk member ${Date.now()} своя`, free = `E2E bulk member ${Date.now()} общая`
+
+  await createTask(a, own, { assignee: env.E2E_MEMBER_NAME! })
+  await createTask(a, free)
+
+  await m.goto('dashboard/tasks')
+  await expect(m.getByTestId('col-todo').getByText(own)).toBeVisible({ timeout: 15_000 })
+  const bar = m.getByRole('toolbar', { name: 'Массовые действия' })
+  await longPressSelect(m.getByTestId('col-todo').locator('li', { hasText: own }))
+  await m.getByTestId('col-todo').locator('li', { hasText: free }).click()
+  await expect(bar).toContainText('Выбрано: 2 задачи')
+
+  // админские действия участнику не показываются
+  await expect(m.getByRole('button', { name: 'Действия…' })).toHaveCount(0)
+  await expect(m.getByRole('button', { name: 'Архивировать' })).toHaveCount(0)
+  await expect(m.getByRole('button', { name: 'Удалить' })).toHaveCount(0)
+  // а «взять» для свободной из выборки — доступно
+  await expect(m.getByRole('button', { name: /^Взять \(1\)$/ })).toBeVisible()
+
+  // быстрый статус применяется только к своей задаче; чужая свободная остаётся как была
+  await m.getByRole('button', { name: 'Review' }).click()
+  await expect(m.getByTestId('col-review').locator('li', { hasText: own })).toBeVisible()
+  await expect(m.getByTestId('col-todo').locator('li', { hasText: free })).toBeVisible()
+
+  // уборка
+  await a.goto('dashboard/tasks')
+  for (const t of [own, free]) {
+    await a.getByRole('link', { name: new RegExp(t) }).click()
+    a.once('dialog', d => d.accept())
+    await a.getByRole('button', { name: 'Архивировать' }).click()
+    await expect(a).toHaveURL(/\/dashboard\/tasks$/)
+  }
+})
+
 test('обзор показывает счётчики; мобильная вёрстка без горизонтальной прокрутки', async ({ page }) => {
   await admin(page)
   await expect(page.getByTestId('stat-total')).toBeVisible()

@@ -12,7 +12,27 @@ import { PRIORITIES, STATUSES } from '../meta'
 import type { Priority, Task, TaskFilters, TaskStatus } from '../types'
 import { Avatar, PageHeader, QueryState, useToast } from '../ui'
 import TasksIO from '../TasksIO'
-import { CreateTaskModal, DueLabel, PriorityChip, StatusChip, TaskCardBody, useTaskUpdate } from '../taskParts'
+import BulkBar from '../BulkBar'
+import {
+  CreateTaskModal, DueLabel, PriorityChip, SelectMark, StatusChip, TaskCardBody,
+  TaskSelectionProvider, useTaskSelectGesture, useTaskSelectionCtx, useTaskUpdate,
+} from '../taskParts'
+
+/** primary pointer грубый (палец) — на таких устройствах drag-and-drop отключаем в
+ *  пользу выбора долгим тапом + массового переноса между колонками через BulkBar
+ *  (см. обсуждение задачи: долгий тап конфликтует с таймером активации dnd-kit). */
+const useIsCoarsePointer = () => useState(() => typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches)[0]
+
+/** Сбрасывает выборку, если реально изменились фильтры (переключение вида доска/список — не в счёт). */
+function ClearSelectionOnFilterChange({ signal }: { signal: string }) {
+  const { clear } = useTaskSelectionCtx()
+  const first = useRef(true)
+  useEffect(() => {
+    if (first.current) { first.current = false; return }
+    clear()
+  }, [signal]) // eslint-disable-line react-hooks/exhaustive-deps
+  return null
+}
 
 const SORTS: { id: TaskFilters['sort']; label: string }[] = [
   { id: 'priority', label: 'По приоритету' },
@@ -67,9 +87,11 @@ export default function Tasks() {
   })
 
   const active_ = members.filter(m => m.status === 'active' && m.user_id)
+  const isTouch = useIsCoarsePointer()
 
   return (
-    <>
+    <TaskSelectionProvider>
+      <ClearSelectionOnFilterChange signal={JSON.stringify(filters)} />
       <PageHeader
         title="Задачи"
         sub={tasks.data ? `${tasks.data.length} в выборке` : undefined}
@@ -124,33 +146,40 @@ export default function Tasks() {
         {active && <button type="button" className="dash-btn dash-btn-ghost" onClick={() => { clear(); setQDraft('') }}>Сбросить</button>}
       </form>
 
+      <p className="dash-muted -mt-2 mb-4 text-xs">
+        {isTouch ? 'Долгий тап по задаче — выбор нескольких, затем обычный тап добавляет ещё.' : 'Ctrl (⌘ на Mac) + клик — выбор нескольких задач.'}
+      </p>
+
+      <BulkBar tasks={tasks.data ?? []} />
+
       <QueryState loading={tasks.isLoading} error={tasks.error} onRetry={() => tasks.refetch()}
         empty={!!tasks.data && tasks.data.length === 0 && view === 'list'}
         emptyText={active ? 'Под фильтры ничего не подходит' : 'Задач пока нет'}
         emptyHint={!active && isAdmin ? 'Создайте первую кнопкой «Новая задача».' : undefined}>
         {view === 'board'
-          ? <Board tasks={tasks.data ?? []} onCreate={isAdmin ? setCreateStatus : undefined} />
+          ? <Board tasks={tasks.data ?? []} onCreate={isAdmin ? setCreateStatus : undefined} isTouch={isTouch} />
           : <ListView tasks={tasks.data ?? []} />}
       </QueryState>
 
       {createStatus && <CreateTaskModal key={createStatus} open onClose={() => setCreateStatus(null)} initialStatus={createStatus} />}
-    </>
+    </TaskSelectionProvider>
   )
 }
 
 // ── доска ───────────────────────────────────────────────────────────────────
 
-function Board({ tasks, onCreate }: { tasks: Task[]; onCreate?: (s: TaskStatus) => void }) {
+function Board({ tasks, onCreate, isTouch }: { tasks: Task[]; onCreate?: (s: TaskStatus) => void; isTouch: boolean }) {
   const { isAdmin, userId } = useWorkspace()
   const update = useTaskUpdate()
   const toast = useToast()
+  const { mode: selecting } = useTaskSelectionCtx()
   const [dragging, setDragging] = useState<Task | null>(null)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
-    useSensor(KeyboardSensor),
-  )
+  // dnd-kit нужны одни и те же хуки на каждом рендере — переключаем только состав массива
+  const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } })
+  const keyboardSensor = useSensor(KeyboardSensor)
+  const sensors = useSensors(...(isTouch ? [keyboardSensor] : [pointerSensor, touchSensor, keyboardSensor]))
 
   const byStatus = useMemo(() => {
     const m = new Map<TaskStatus, Task[]>(STATUSES.map(s => [s.id, []]))
@@ -159,7 +188,9 @@ function Board({ tasks, onCreate }: { tasks: Task[]; onCreate?: (s: TaskStatus) 
     return m
   }, [tasks])
 
-  const canMove = (t: Task) => isAdmin || t.assignee_id === userId
+  // на тачскрине долгий тап входит в выбор — drag ему не мешает, он просто выключен;
+  // пока идёт выбор, перетаскивание тоже выключено (иначе конфликтует с тапом-выбором)
+  const canMove = (t: Task) => !isTouch && !selecting && (isAdmin || t.assignee_id === userId)
 
   const onDragEnd = (e: DragEndEvent) => {
     setDragging(null)
@@ -230,12 +261,19 @@ function Column({ status, tasks, canMove, onCreate }: {
 function Card({ task, movable }: { task: Task; movable: boolean }) {
   const drag = useDraggable({ id: task.id, disabled: !movable })
   const drop = useDroppable({ id: task.id })
+  const select = useTaskSelectGesture(task.id)
   return (
     <li ref={n => { drag.setNodeRef(n); drop.setNodeRef(n) }} data-testid={`card-${task.id}`}
-      {...drag.attributes} {...drag.listeners}
+      {...select.handlers} {...drag.attributes} {...drag.listeners}
       aria-roledescription={movable ? 'перетаскиваемая задача' : undefined}
-      className={`dash-card bg-[var(--d-raised)] p-3 ${movable ? 'cursor-grab touch-manipulation' : ''} ${drag.isDragging ? 'opacity-30' : ''}`}>
-      <TaskCardBody task={task} />
+      aria-selected={select.mode ? select.isSelected : undefined}
+      className={`dash-card touch-manipulation bg-[var(--d-raised)] p-3 ${movable ? 'cursor-grab' : ''} ${drag.isDragging ? 'opacity-30' : ''} ${select.isSelected ? 'ring-2 ring-[var(--d-tint)]' : ''}`}>
+      {select.mode ? (
+        <div className="flex items-start gap-2">
+          <SelectMark checked={select.isSelected} />
+          <div className="min-w-0 flex-1"><TaskCardBody task={task} /></div>
+        </div>
+      ) : <TaskCardBody task={task} />}
     </li>
   )
 }
@@ -248,19 +286,27 @@ function ListView({ tasks }: { tasks: Task[] }) {
   return (
     <div className="dash-card overflow-hidden">
       <ul>
-        {tasks.slice(0, shown).map(t => (
-          <li key={t.id} className="dash-row flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
-            <Link to={`/dashboard/tasks/${t.id}`} className="min-w-0 flex-1 basis-56 truncate text-sm font-medium hover:underline"><span className="dash-muted mr-1 font-mono text-xs font-normal">#{t.num}</span>{t.title}</Link>
-            <StatusChip status={t.status} />
-            <PriorityChip priority={t.priority} />
-            <DueLabel task={t} />
-            <span className="flex items-center gap-2 text-xs dash-muted"><Avatar member={byUser(t.assignee_id)} size={22} />{byUser(t.assignee_id)?.name ?? 'Не назначено'}</span>
-          </li>
-        ))}
+        {tasks.slice(0, shown).map(t => <ListRow key={t.id} task={t} byUser={byUser} />)}
       </ul>
       {shown < tasks.length && (
         <div className="p-3 text-center"><button className="dash-btn dash-btn-ghost dash-btn-sm" onClick={() => setShown(s => s + 25)}>Показать ещё ({tasks.length - shown})</button></div>
       )}
     </div>
+  )
+}
+
+function ListRow({ task: t, byUser }: { task: Task; byUser: ReturnType<typeof useWorkspace>['byUser'] }) {
+  const select = useTaskSelectGesture(t.id)
+  return (
+    <li data-testid={`row-${t.id}`} {...select.handlers}
+      aria-selected={select.mode ? select.isSelected : undefined}
+      className={`dash-row flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 ${select.isSelected ? 'bg-[var(--d-raised)]' : ''}`}>
+      {select.mode && <SelectMark checked={select.isSelected} />}
+      <Link to={`/dashboard/tasks/${t.id}`} className="min-w-0 flex-1 basis-56 truncate text-sm font-medium hover:underline"><span className="dash-muted mr-1 font-mono text-xs font-normal">#{t.num}</span>{t.title}</Link>
+      <StatusChip status={t.status} />
+      <PriorityChip priority={t.priority} />
+      <DueLabel task={t} />
+      <span className="flex items-center gap-2 text-xs dash-muted"><Avatar member={byUser(t.assignee_id)} size={22} />{byUser(t.assignee_id)?.name ?? 'Не назначено'}</span>
+    </li>
   )
 }

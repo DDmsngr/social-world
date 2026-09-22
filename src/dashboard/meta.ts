@@ -65,6 +65,12 @@ export function fmtSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(1)} МБ`
 }
 
+export function pluralTasks(n: number): string {
+  const mod10 = n % 10, mod100 = n % 100
+  const word = mod100 >= 11 && mod100 <= 14 ? 'задач' : mod10 === 1 ? 'задача' : mod10 >= 2 && mod10 <= 4 ? 'задачи' : 'задач'
+  return `${n} ${word}`
+}
+
 export const initials = (name: string) =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]!.toUpperCase()).join('')
 
