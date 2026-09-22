@@ -54,7 +54,7 @@ export default function Notifications() {
               className={`dash-btn dash-btn-sm ${tab === t.id ? '' : 'dash-btn-ghost'}`}
               onClick={() => setSp(t.id === 'personal' ? {} : { tab: t.id }, { replace: true })}>
               {t.label}
-              {n > 0 && <span className={`rounded-full px-1.5 text-[11px] font-bold ${tab === t.id ? 'bg-white/25' : 'bg-[var(--d-tint)] text-[#151417]'}`}
+              {n > 0 && <span className={`rounded-full px-1.5 text-[11px] font-bold ${tab === t.id ? 'bg-white/25' : 'bg-[var(--d-tint)] text-[#21151d]'}`}
                 aria-label={`${n} непрочитанных`}>{n}</span>}
             </button>
           )

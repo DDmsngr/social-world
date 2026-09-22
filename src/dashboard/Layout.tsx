@@ -52,7 +52,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               <n.icon className="h-4 w-4" aria-hidden />
               <span className="flex-1">{n.label}</span>
               {badge(n.to) > 0 && (
-                <span className="rounded-full bg-[var(--d-tint)] px-1.5 text-[11px] font-bold text-[#151417]"
+                <span className="rounded-full bg-[var(--d-tint)] px-1.5 text-[11px] font-bold text-[#21151d]"
                   aria-label={`${badge(n.to)} непрочитанных`}>{badge(n.to)}</span>
               )}
             </NavLink>
@@ -83,7 +83,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             aria-label={noteBadge ? `Уведомления, непрочитанных: ${noteBadge}` : 'Уведомления'}>
             <Bell className="h-4 w-4" aria-hidden />
             {noteBadge > 0 && (
-              <span className="absolute -right-1 -top-1 rounded-full bg-[var(--d-tint)] px-1.5 text-[10px] font-bold text-[#151417]">{noteBadge}</span>
+              <span className="absolute -right-1 -top-1 rounded-full bg-[var(--d-tint)] px-1.5 text-[10px] font-bold text-[#21151d]">{noteBadge}</span>
             )}
           </NavLink>
           <button className="dash-btn dash-btn-ghost !px-3 md:hidden" onClick={() => void signOut()} aria-label="Выйти">
@@ -99,7 +99,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               className={({ isActive }) => `relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${isActive ? 'text-[var(--d-tint)]' : 'text-[var(--d-muted)]'}`}>
               <n.icon className="h-5 w-5" aria-hidden />
               {n.label}
-              {badge(n.to) > 0 && <span className="absolute right-[22%] top-1.5 rounded-full bg-[var(--d-tint)] px-1.5 text-[10px] font-bold text-[#151417]">{badge(n.to)}</span>}
+              {badge(n.to) > 0 && <span className="absolute right-[22%] top-1.5 rounded-full bg-[var(--d-tint)] px-1.5 text-[10px] font-bold text-[#21151d]">{badge(n.to)}</span>}
             </NavLink>
           ))}
         </nav>

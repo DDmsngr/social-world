@@ -1,29 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #151417;
-  --ink2: #211f22;
-  --paper: #e7e4e2;
+  /* ChaWo — «Бургунди и шампань», зафиксированная фирменная палитра
+     (22.09.2026). Единая тёмная тема, без светлого варианта. */
+  --ink: #21151d;
+  --ink2: #302029;
+  --paper: #fff8f0;
 
-  /* Бордовый — цвет действия: кнопки и заливки. */
-  --primary: #7a2436;
-  --primary-hover: #963148;
+  /* Розовый — цвет действия: кнопки и заливки. */
+  --primary: #e89bba;
+  --primary-hover: #f0b0c9;
+  --primary-tint: #e89bba;
 
-  /* Тот же бордовый для текста и иконок на графите: #7a2436 на тёмном
-     фоне даёт контраст 1,8:1 и читается как грязное пятно. */
-  --primary-tint: #c4677c;
+  --success: #75c9a5;
+  --error: #e87878;
 
-  --success: #4fa77a;
-  --geo: #6e9bc4;
+  /* Гео сознательно не розовый и не голубой — золотистый (шампань), чтобы
+     не сливаться с брендовым --primary на карте. */
+  --geo: #d8b56a;
+  --champagne: #e6c98a;
 
-  --line: rgba(64, 59, 62, 0.55);
-  --line-strong: #403b3e;
+  --line: rgba(81, 56, 67, 0.55);
+  --line-strong: #513843;
 }
 
 @layer base {
   html, body {
     background: var(--ink);
-    color: #ece7de;
+    color: var(--paper);
     overflow-x: hidden;
   }
 
@@ -122,14 +126,14 @@
     font-weight: 500;
     letter-spacing: 0.28em;
     text-transform: uppercase;
-    color: rgba(236, 231, 222, 0.5);
+    color: rgba(255, 248, 240, 0.5);
   }
 
   .section-label::before {
     content: '';
     width: 40px;
     height: 1px;
-    background: rgba(236, 231, 222, 0.3);
+    background: rgba(255, 248, 240, 0.3);
   }
 
   /* ————— Divider line ————— */

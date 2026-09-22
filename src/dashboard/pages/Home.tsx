@@ -10,13 +10,13 @@ import { ActivityList } from '../shared'
 import { ClaimButton, DueLabel, PriorityChip, StatusChip } from '../taskParts'
 
 const TILES: { key: string; label: string; to: string; color: string }[] = [
-  { key: 'total', label: 'Всего', to: '/dashboard/tasks', color: '#e7e4e2' },
-  { key: 'todo', label: 'To Do', to: '/dashboard/tasks?status=todo', color: '#aaa5a6' },
-  { key: 'in_progress', label: 'In Progress', to: '/dashboard/tasks?status=in_progress', color: '#6e9bc4' },
-  { key: 'review', label: 'Review', to: '/dashboard/tasks?status=review', color: '#d9a441' },
-  { key: 'done', label: 'Done', to: '/dashboard/tasks?status=done', color: '#4fa77a' },
-  { key: 'blocked', label: 'Blocked', to: '/dashboard/tasks?status=blocked', color: '#e5566d' },
-  { key: 'overdue', label: 'Просрочено', to: '/dashboard/tasks?due=overdue', color: '#e5566d' },
+  { key: 'total', label: 'Всего', to: '/dashboard/tasks', color: '#fff8f0' },
+  { key: 'todo', label: 'To Do', to: '/dashboard/tasks?status=todo', color: '#bba9af' },
+  { key: 'in_progress', label: 'In Progress', to: '/dashboard/tasks?status=in_progress', color: '#d8b56a' },
+  { key: 'review', label: 'Review', to: '/dashboard/tasks?status=review', color: '#e6c98a' },
+  { key: 'done', label: 'Done', to: '/dashboard/tasks?status=done', color: '#75c9a5' },
+  { key: 'blocked', label: 'Blocked', to: '/dashboard/tasks?status=blocked', color: '#e87878' },
+  { key: 'overdue', label: 'Просрочено', to: '/dashboard/tasks?due=overdue', color: '#e87878' },
 ]
 
 const Panel = ({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) => (

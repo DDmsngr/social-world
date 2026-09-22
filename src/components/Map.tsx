@@ -30,7 +30,7 @@ export default function Map() {
             className="absolute inset-0"
             style={{
               background:
-                'radial-gradient(60% 55% at 55% 45%, rgba(196,103,124,0.35) 0%, rgba(196,103,124,0.06) 45%, transparent 70%), radial-gradient(35% 40% at 25% 70%, rgba(196,103,124,0.20) 0%, transparent 60%), radial-gradient(30% 35% at 78% 65%, rgba(110,155,196,0.20) 0%, transparent 60%), #151417',
+                'radial-gradient(60% 55% at 55% 45%, rgba(232,155,186,0.35) 0%, rgba(232,155,186,0.06) 45%, transparent 70%), radial-gradient(35% 40% at 25% 70%, rgba(232,155,186,0.20) 0%, transparent 60%), radial-gradient(30% 35% at 78% 65%, rgba(216,181,106,0.20) 0%, transparent 60%), #21151d',
             }}
           />
           {/* streets */}
@@ -40,7 +40,7 @@ export default function Map() {
                 key={`h${i}`}
                 d={`M0 ${50 + i * 45} Q400 ${30 + i * 45 + Math.sin(i) * 20} 800 ${60 + i * 45}`}
                 fill="none"
-                stroke="rgba(236,231,222,0.15)"
+                stroke="rgba(255,248,240,0.15)"
                 strokeWidth="0.8"
               />
             ))}
@@ -49,7 +49,7 @@ export default function Map() {
                 key={`v${i}`}
                 d={`M${60 + i * 80} 0 Q${40 + i * 80 + Math.cos(i) * 20} 300 ${80 + i * 80} 600`}
                 fill="none"
-                stroke="rgba(236,231,222,0.12)"
+                stroke="rgba(255,248,240,0.12)"
                 strokeWidth="0.6"
               />
             ))}
@@ -72,11 +72,11 @@ export default function Map() {
               <span className="relative flex h-2.5 w-2.5">
                 <span
                   className="absolute inset-0 rounded-full opacity-40 animate-ping"
-                  style={{ background: p.tone === 'clay' ? '#c4677c' : '#6e9bc4' }}
+                  style={{ background: p.tone === 'clay' ? '#e89bba' : '#d8b56a' }}
                 />
                 <span
                   className="relative inline-flex h-2.5 w-2.5 rounded-full"
-                  style={{ background: p.tone === 'clay' ? '#c4677c' : '#6e9bc4' }}
+                  style={{ background: p.tone === 'clay' ? '#e89bba' : '#d8b56a' }}
                 />
               </span>
             </div>
@@ -122,9 +122,9 @@ export default function Map() {
                         width: `${d.pulse}%`,
                         background:
                           d.tone === 'clay'
-                            ? 'linear-gradient(90deg, #7a2436, #c4677c)'
+                            ? 'linear-gradient(90deg, #e89bba, #f0b0c9)'
                             : d.tone === 'sage'
-                            ? 'linear-gradient(90deg, #4fa77a, #7fc9a3)'
+                            ? 'linear-gradient(90deg, #d8b56a, #e6c98a)'
                             : 'rgba(255,255,255,0.35)',
                       }}
                     />

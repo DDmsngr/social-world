@@ -105,7 +105,7 @@ export default function Navbar() {
           onClick={() => setOpen(false)}
         />
         <aside
-          className="absolute top-0 right-0 h-full w-[85%] max-w-[340px] bg-[#151417]/95 backdrop-blur-xl border-l border-white/10 flex flex-col pt-24 px-8"
+          className="absolute top-0 right-0 h-full w-[85%] max-w-[340px] bg-[#21151d]/95 backdrop-blur-xl border-l border-white/10 flex flex-col pt-24 px-8"
           style={{
             transform: open ? 'translateX(0)' : 'translateX(100%)',
             transition: `transform 500ms ${EASE}`,

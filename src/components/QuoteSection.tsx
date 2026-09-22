@@ -43,7 +43,7 @@ export default function QuoteSection() {
     <section
       ref={sectionRef}
       className="relative min-h-screen w-full overflow-hidden flex items-center justify-center px-6 md:px-12"
-      style={{ background: 'radial-gradient(120% 80% at 50% 50%, #211f22 0%, #151417 60%)' }}
+      style={{ background: 'radial-gradient(120% 80% at 50% 50%, #302029 0%, #21151d 60%)' }}
     >
       {/* subtle horizontal hairlines top / bottom of the section */}
       <div className="absolute top-24 left-0 right-0 divider-x" />
@@ -54,7 +54,7 @@ export default function QuoteSection() {
         ref={glowRef}
         className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[900px] rounded-full will-change-transform"
         style={{
-          background: 'radial-gradient(closest-side, rgba(196,103,124,0.18), rgba(196,103,124,0) 70%)',
+          background: 'radial-gradient(closest-side, rgba(232,155,186,0.18), rgba(232,155,186,0) 70%)',
           transform: 'translate3d(-50%, 40px, 0)',
           filter: 'blur(20px)',
         }}

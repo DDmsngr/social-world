@@ -72,7 +72,7 @@ export default function Messages() {
                         <Link to={`/dashboard/messages/${c.id}`} aria-current={c.id === convId ? 'page' : undefined}
                           className={`flex min-h-11 items-center gap-2 px-4 text-sm hover:bg-[var(--d-raised)] ${c.id === convId ? 'bg-[var(--d-raised)]' : ''}`}>
                           <span className="flex-1 truncate">{c.kind === 'channel' ? '# ' : ''}{label(c)}</span>
-                          {n > 0 && <span className="rounded-full bg-[var(--d-tint)] px-1.5 text-[11px] font-bold text-[#151417]" aria-label={`${n} непрочитанных`}>{n}</span>}
+                          {n > 0 && <span className="rounded-full bg-[var(--d-tint)] px-1.5 text-[11px] font-bold text-[#21151d]" aria-label={`${n} непрочитанных`}>{n}</span>}
                         </Link>
                       </li>
                     )

@@ -41,7 +41,7 @@ export default function TaskDetail() {
   const [newLabel, setNewLabel] = useState('')
   const addLabel = useMutation({
     mutationFn: async () => {
-      const l = await createLabel(workspace.id, newLabel.trim(), '#c4677c')
+      const l = await createLabel(workspace.id, newLabel.trim(), '#e89bba')
       await setTaskLabels(id, [...(t?.label_ids ?? []), l.id])
     },
     onSuccess: () => { setNewLabel(''); qc.invalidateQueries({ queryKey: ['labels'] }); qc.invalidateQueries({ queryKey: ['task', id] }); qc.invalidateQueries({ queryKey: ['tasks'] }) },

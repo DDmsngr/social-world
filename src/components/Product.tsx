@@ -98,15 +98,15 @@ function DiscoverScreen() {
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(70% 60% at 55% 45%, rgba(196,103,124,0.5) 0%, rgba(196,103,124,0.06) 45%, transparent 70%), radial-gradient(35% 45% at 20% 75%, rgba(196,103,124,0.35) 0%, transparent 60%), radial-gradient(30% 40% at 78% 65%, rgba(110,155,196,0.35) 0%, transparent 60%), #151417',
+              'radial-gradient(70% 60% at 55% 45%, rgba(232,155,186,0.5) 0%, rgba(232,155,186,0.06) 45%, transparent 70%), radial-gradient(35% 45% at 20% 75%, rgba(232,155,186,0.35) 0%, transparent 60%), radial-gradient(30% 40% at 78% 65%, rgba(216,181,106,0.35) 0%, transparent 60%), #21151d',
           }}
         />
         <svg className="absolute inset-0 w-full h-full opacity-40" viewBox="0 0 300 400" preserveAspectRatio="none">
           {[...Array(10)].map((_, i) => (
-            <path key={`h${i}`} d={`M0 ${30 + i * 35} Q150 ${20 + i * 35 + Math.sin(i) * 10} 300 ${40 + i * 35}`} fill="none" stroke="rgba(236,231,222,0.2)" strokeWidth="0.6" />
+            <path key={`h${i}`} d={`M0 ${30 + i * 35} Q150 ${20 + i * 35 + Math.sin(i) * 10} 300 ${40 + i * 35}`} fill="none" stroke="rgba(255,248,240,0.2)" strokeWidth="0.6" />
           ))}
           {[...Array(7)].map((_, i) => (
-            <path key={`v${i}`} d={`M${40 + i * 40} 0 Q${30 + i * 40 + Math.cos(i) * 15} 200 ${50 + i * 40} 400`} fill="none" stroke="rgba(236,231,222,0.15)" strokeWidth="0.5" />
+            <path key={`v${i}`} d={`M${40 + i * 40} 0 Q${30 + i * 40 + Math.cos(i) * 15} 200 ${50 + i * 40} 400`} fill="none" stroke="rgba(255,248,240,0.15)" strokeWidth="0.5" />
           ))}
         </svg>
         {[
@@ -120,8 +120,8 @@ function DiscoverScreen() {
         ].map((p, i) => (
           <div key={i} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: p.x, top: p.y }}>
             <span className={`relative flex ${p.big ? 'h-3 w-3' : 'h-2 w-2'}`}>
-              <span className="absolute inset-0 rounded-full opacity-40 animate-ping" style={{ background: p.tone === 'clay' ? '#c4677c' : '#6e9bc4' }} />
-              <span className={`relative inline-flex rounded-full ${p.big ? 'h-3 w-3' : 'h-2 w-2'}`} style={{ background: p.tone === 'clay' ? '#c4677c' : '#6e9bc4' }} />
+              <span className="absolute inset-0 rounded-full opacity-40 animate-ping" style={{ background: p.tone === 'clay' ? '#e89bba' : '#d8b56a' }} />
+              <span className={`relative inline-flex rounded-full ${p.big ? 'h-3 w-3' : 'h-2 w-2'}`} style={{ background: p.tone === 'clay' ? '#e89bba' : '#d8b56a' }} />
             </span>
           </div>
         ))}
@@ -214,7 +214,7 @@ function ProfileScreen() {
       </div>
       <div className="px-5 mt-3">
         <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-          <div className="h-full w-[94%] rounded-full" style={{ background: 'linear-gradient(90deg, #7a2436, #c4677c)' }} />
+          <div className="h-full w-[94%] rounded-full" style={{ background: 'linear-gradient(90deg, #e89bba, #f0b0c9)' }} />
         </div>
         <div className="mt-1.5 flex justify-between text-[8px] tracking-widest uppercase text-white/40">
           <span>Репутация</span><span className="text-clay">94 / 100</span>
@@ -284,10 +284,10 @@ export default function Product() {
             {/* clay glow */}
             <div className="absolute -inset-16 pointer-events-none" aria-hidden>
               <div className="w-full h-full rounded-full"
-                   style={{ background: 'radial-gradient(closest-side, rgba(196,103,124,0.25), transparent 70%)' }} />
+                   style={{ background: 'radial-gradient(closest-side, rgba(232,155,186,0.25), transparent 70%)' }} />
             </div>
 
-            <div className="relative w-[300px] h-[620px] rounded-[52px] border-hair-strong bg-ink2 p-3 shadow-[0_60px_120px_-40px_rgba(196,103,124,0.35)]">
+            <div className="relative w-[300px] h-[620px] rounded-[52px] border-hair-strong bg-ink2 p-3 shadow-[0_60px_120px_-40px_rgba(232,155,186,0.35)]">
               {/* notch */}
               <div className="absolute top-4 left-1/2 -translate-x-1/2 w-24 h-5 rounded-full bg-black z-30" />
 

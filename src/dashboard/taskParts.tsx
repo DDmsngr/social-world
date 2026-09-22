@@ -127,7 +127,7 @@ export function SelectMark({ checked }: { checked: boolean }) {
   return (
     <span aria-hidden
       className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 transition-colors ${checked ? 'border-[var(--d-tint)] bg-[var(--d-tint)]' : 'border-[var(--d-line)]'}`}>
-      {checked && <Check className="h-3.5 w-3.5 text-[#151417]" strokeWidth={3} aria-hidden />}
+      {checked && <Check className="h-3.5 w-3.5 text-[#21151d]" strokeWidth={3} aria-hidden />}
     </span>
   )
 }

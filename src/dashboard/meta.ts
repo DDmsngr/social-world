@@ -2,18 +2,18 @@ import type { ActivityEvent, Member, MemberStatus, Priority, Role, TaskStatus } 
 
 export const STATUSES: { id: TaskStatus; label: string; color: string }[] = [
   { id: 'backlog', label: 'Backlog', color: '#8a8587' },
-  { id: 'todo', label: 'To Do', color: '#aaa5a6' },
-  { id: 'in_progress', label: 'In Progress', color: '#6e9bc4' },
-  { id: 'review', label: 'Review', color: '#d9a441' },
-  { id: 'blocked', label: 'Blocked', color: '#e5566d' },
-  { id: 'done', label: 'Done', color: '#4fa77a' },
+  { id: 'todo', label: 'To Do', color: '#bba9af' },
+  { id: 'in_progress', label: 'In Progress', color: '#d8b56a' },
+  { id: 'review', label: 'Review', color: '#e6c98a' },
+  { id: 'blocked', label: 'Blocked', color: '#e87878' },
+  { id: 'done', label: 'Done', color: '#75c9a5' },
 ]
 
 export const PRIORITIES: { id: Priority; label: string; color: string; weight: number }[] = [
   { id: 'low', label: 'Low', color: '#8a8587', weight: 1 },
-  { id: 'medium', label: 'Medium', color: '#6e9bc4', weight: 2 },
-  { id: 'high', label: 'High', color: '#d9a441', weight: 3 },
-  { id: 'critical', label: 'Critical', color: '#e5566d', weight: 4 },
+  { id: 'medium', label: 'Medium', color: '#d8b56a', weight: 2 },
+  { id: 'high', label: 'High', color: '#e6c98a', weight: 3 },
+  { id: 'critical', label: 'Critical', color: '#e87878', weight: 4 },
 ]
 
 export const ROLE_LABEL: Record<Role, string> = { owner: 'Owner', admin: 'Admin', member: 'Member' }

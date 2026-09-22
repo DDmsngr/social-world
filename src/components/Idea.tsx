@@ -33,7 +33,7 @@ export default function Idea() {
                 user → пост → лайк → пост
               </p>
             </div>
-            <div className="rounded-xl border-hair p-5" style={{ background: 'rgba(196,103,124,0.05)' }}>
+            <div className="rounded-xl border-hair p-5" style={{ background: 'rgba(232,155,186,0.05)' }}>
               <div className="section-label mb-3"><span className="text-clay/70">Новая модель</span></div>
               <p className="font-mono text-sm text-white leading-relaxed">
                 user → люди → место →<br />событие → город

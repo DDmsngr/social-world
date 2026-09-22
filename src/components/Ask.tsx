@@ -35,7 +35,7 @@ export default function Ask() {
           className="relative rounded-3xl border-hair-strong p-8 md:p-12 overflow-hidden"
           style={{
             background:
-              'radial-gradient(80% 60% at 20% 0%, rgba(122,36,54,0.22), transparent 60%), radial-gradient(60% 60% at 100% 100%, rgba(79,167,122,0.10), transparent 60%), #151417',
+              'radial-gradient(80% 60% at 20% 0%, rgba(232,155,186,0.22), transparent 60%), radial-gradient(60% 60% at 100% 100%, rgba(117,201,165,0.10), transparent 60%), #21151d',
           }}
         >
           <div className="flex items-baseline justify-between mb-10">
@@ -104,8 +104,8 @@ export default function Ask() {
                     style={{
                       background:
                         a.tone === 'clay'
-                          ? 'linear-gradient(90deg, #7a2436, #c4677c)'
-                          : 'linear-gradient(90deg, #4fa77a, #7fc9a3)',
+                          ? 'linear-gradient(90deg, #e89bba, #f0b0c9)'
+                          : 'linear-gradient(90deg, #75c9a5, #a5dcc4)',
                     }}
                   />
                 </div>
