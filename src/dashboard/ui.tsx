@@ -79,12 +79,12 @@ export function PageHeader({ title, sub, actions }: { title: string; sub?: React
 }
 
 /** Поле даты: клик в любое место открывает календарь, а не выбирает сегмент дд/мм/гггг. */
-export function DateInput({ value, onChange, disabled, min, label }: {
-  value: string; onChange: (v: string) => void; disabled?: boolean; min?: string; label?: string
+export function DateInput({ value, onChange, disabled, min, label, title }: {
+  value: string; onChange: (v: string) => void; disabled?: boolean; min?: string; label?: string; title?: string
 }) {
   return (
     <input
-      className="dash-input" type="date" value={value} min={min} disabled={disabled} aria-label={label}
+      className="dash-input" type="date" value={value} min={min} disabled={disabled} aria-label={label} title={title}
       onChange={e => onChange(e.target.value)}
       onClick={e => { try { e.currentTarget.showPicker() } catch { /* браузер без showPicker */ } }}
     />

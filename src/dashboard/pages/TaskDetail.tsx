@@ -14,6 +14,8 @@ import Md from '../Md'
 import { ActivityList, FileList, UploadButton } from '../shared'
 import { ClaimButton, LabelChips, PriorityChip, StatusChip, useTaskUpdate } from '../taskParts'
 
+const ADMIN_ONLY_HINT = 'Изменить может только owner или admin'
+
 export default function TaskDetail() {
   const { id = '' } = useParams()
   const { members, byUser, isAdmin, userId, labels, workspace } = useWorkspace()
@@ -87,23 +89,23 @@ export default function TaskDetail() {
 
             <section aria-label="Параметры" className="dash-card mb-5 grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">
               <Field label="Статус">
-                <select className="dash-input" disabled={!canStatus} value={t.status} onChange={e => patch({ status: e.target.value as TaskStatus })}>
+                <select className="dash-input" disabled={!canStatus} title={canStatus ? undefined : 'Менять статус может исполнитель или owner/admin'} value={t.status} onChange={e => patch({ status: e.target.value as TaskStatus })}>
                   {STATUSES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
                 </select>
               </Field>
               <Field label="Приоритет">
-                <select className="dash-input" disabled={!isAdmin} value={t.priority} onChange={e => patch({ priority: e.target.value as Priority })}>
+                <select className="dash-input" disabled={!isAdmin} title={isAdmin ? undefined : ADMIN_ONLY_HINT} value={t.priority} onChange={e => patch({ priority: e.target.value as Priority })}>
                   {PRIORITIES.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
                 </select>
               </Field>
               <Field label="Исполнитель">
-                <select className="dash-input" disabled={!isAdmin} value={t.assignee_id ?? ''} onChange={e => patch({ assignee_id: e.target.value || null })}>
+                <select className="dash-input" disabled={!isAdmin} title={isAdmin ? undefined : ADMIN_ONLY_HINT} value={t.assignee_id ?? ''} onChange={e => patch({ assignee_id: e.target.value || null })}>
                   <option value="">Не назначен</option>
                   {assignable.map(m => <option key={m.id} value={m.user_id!}>{m.name}</option>)}
                 </select>
               </Field>
               <Field label="Срок">
-                <DateInput disabled={!isAdmin} value={t.due_date ?? ''} onChange={v => patch({ due_date: v || null })} />
+                <DateInput disabled={!isAdmin} title={isAdmin ? undefined : ADMIN_ONLY_HINT} value={t.due_date ?? ''} onChange={v => patch({ due_date: v || null })} />
               </Field>
               <div>
                 <span className="dash-label mb-1.5 block">Автор</span>

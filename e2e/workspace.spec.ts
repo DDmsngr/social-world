@@ -437,7 +437,7 @@ test('множественный выбор Ctrl+клик: счётчик, ма�
   await page.getByTestId('col-todo').locator('li', { hasText: t2 }).click({ modifiers: ['Control'] })
   await expect(bar).toContainText('Выбрано: 2 задачи', { timeout: 15_000 })
 
-  await page.getByRole('button', { name: 'Review' }).click() // чип быстрого переноса в колонку
+  await page.getByRole('button', { name: 'Review', exact: true }).click() // чип быстрого переноса в колонку
   await expect(page.getByTestId('col-review').locator('li', { hasText: t1 })).toBeVisible()
   await expect(page.getByTestId('col-review').locator('li', { hasText: t2 })).toBeVisible()
   await expect(bar).toHaveCount(0) // после действия выбор снялся сам
@@ -466,7 +466,7 @@ test('множественный выбор долгим тапом: вход в
   await expect(bar).toContainText('Выбрано: 2 задачи', { timeout: 15_000 })
   await expect(page).toHaveURL(/\/dashboard\/tasks$/)
 
-  await page.getByRole('button', { name: 'Blocked' }).click()
+  await page.getByRole('button', { name: 'Blocked', exact: true }).click()
   await expect(page.getByTestId('col-blocked').locator('li', { hasText: t1 })).toBeVisible()
   await expect(page.getByTestId('col-blocked').locator('li', { hasText: t2 })).toBeVisible()
   await expect(bar).toHaveCount(0)
@@ -559,7 +559,7 @@ test('массовые действия участника: только ста�
   await expect(m.getByRole('button', { name: /^Взять \(1\)$/ })).toBeVisible()
 
   // быстрый статус применяется только к своей задаче; чужая свободная остаётся как была
-  await m.getByRole('button', { name: 'Review' }).click()
+  await m.getByRole('button', { name: 'Review', exact: true }).click()
   await expect(m.getByTestId('col-review').locator('li', { hasText: own })).toBeVisible()
   await expect(m.getByTestId('col-todo').locator('li', { hasText: free })).toBeVisible()
 
