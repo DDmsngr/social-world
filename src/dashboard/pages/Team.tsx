@@ -54,7 +54,7 @@ export default function Team() {
               const current = mine.filter(t => t.status !== 'done' && t.status !== 'backlog').length
               const done = mine.filter(t => t.status === 'done').length
               return (
-                <li key={m.id} className="dash-card p-4" data-testid={`member-${m.email}`}>
+                <li key={m.id} className="dash-card min-w-0 p-4" data-testid={`member-${m.email}`}>
                   <div className="flex items-center gap-3">
                     <Avatar member={m} size={40} />
                     <div className="min-w-0 flex-1">

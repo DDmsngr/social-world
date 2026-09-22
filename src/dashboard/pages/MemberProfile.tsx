@@ -53,7 +53,7 @@ export default function MemberProfile() {
       <QueryState loading={tasks.isLoading} error={tasks.error} onRetry={() => tasks.refetch()}>
         <div className="grid gap-4 md:grid-cols-2">
           {[{ t: 'Активные задачи', list: active, e: 'Активных задач нет' }, { t: 'Завершённые', list: done, e: 'Завершённых пока нет' }].map(g => (
-            <section key={g.t} className="dash-card p-4" aria-label={g.t}>
+            <section key={g.t} className="dash-card min-w-0 p-4" aria-label={g.t}>
               <h2 className="dash-label mb-2">{g.t} · {g.list.length}</h2>
               {g.list.length === 0 ? <p className="dash-muted text-sm">{g.e}</p> : (
                 <ul>{g.list.map(t => (

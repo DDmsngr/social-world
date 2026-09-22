@@ -30,7 +30,6 @@ export default function BulkBar({ tasks }: { tasks: Task[] }) {
   // фильтрация по факту загруженных задач лечит случай, когда выбранная задача
   // пропала из выборки (например, её архивировали в другой вкладке)
   const selTasks = tasks.filter(t => ids.includes(t.id))
-  if (selTasks.length === 0) return null
 
   const mine = selTasks.filter(t => t.assignee_id === userId)
   const free = selTasks.filter(t => !t.assignee_id && t.status !== 'done')
@@ -78,6 +77,12 @@ export default function BulkBar({ tasks }: { tasks: Task[] }) {
   })
 
   const busy = quickStatus.isPending || claimAll.isPending || releaseAll.isPending || archive.isPending || del.isPending
+
+  // return ПОСЛЕ всех хуков: react error #310 (hooks mismatch), если условный
+  // выход стоит раньше useMutation — при первом же выборе задачи компонент
+  // внезапно вызывал на 5 хуков больше, чем на предыдущем рендере, и React
+  // ронял всё дерево (клики по задачам переставали работать целиком).
+  if (selTasks.length === 0) return null
 
   return (
     <div className="sticky top-16 z-20 mb-4 rounded-xl border border-[var(--d-champagne)] bg-[var(--d-raised)] p-3 shadow-lg" role="toolbar" aria-label="Массовые действия">

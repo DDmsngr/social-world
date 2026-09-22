@@ -19,8 +19,12 @@ const TILES: { key: string; label: string; to: string; color: string }[] = [
   { key: 'overdue', label: 'Просрочено', to: '/dashboard/tasks?due=overdue', color: '#e87878' },
 ]
 
+// min-w-0: как прямой ребёнок grid-контейнера, section по умолчанию не может
+// сжаться уже своего минимального содержимого (min-width:auto у грид-айтемов) —
+// нераскрывающийся чип внутри тогда раздувает колонку шире экрана, и flex-wrap
+// в строках ниже уже не успевает отработать, хотя формально «настроен»
 const Panel = ({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) => (
-  <section className="dash-card p-4" aria-label={title}>
+  <section className="dash-card min-w-0 p-4" aria-label={title}>
     <div className="mb-3 flex items-center justify-between"><h2 className="dash-label">{title}</h2>{action}</div>
     {children}
   </section>
@@ -71,7 +75,7 @@ export default function Home() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <Panel title={`Свободные задачи · ${free.length}`} action={<Link to="/dashboard/tasks?assignee=none" className="dash-muted text-xs underline">Все свободные</Link>}>
             <QueryState loading={tasks.isLoading} error={tasks.error} onRetry={() => tasks.refetch()} empty={free.length === 0} emptyText="Свободных задач нет" emptyHint="Задачи без исполнителя может взять любой участник — они появятся здесь.">
               <ul data-testid="free-tasks">
@@ -138,7 +142,7 @@ export default function Home() {
           </QueryState>
         </Panel>
 
-        <div className="lg:col-span-2"><Panel title="Последняя активность"><ActivityList /></Panel></div>
+        <div className="min-w-0 lg:col-span-2"><Panel title="Последняя активность"><ActivityList /></Panel></div>
       </div>
     </>
   )
@@ -160,7 +164,7 @@ function TaskRows({ tasks }: { tasks: Task[] }) {
 
 function TaskListPanel({ title, tasks, accent }: { title: string; tasks: Task[]; accent?: boolean }) {
   return (
-    <section className={`dash-card p-4 ${accent ? '!border-[#e5566d66]' : ''}`} aria-label={title}>
+    <section className={`dash-card min-w-0 p-4 ${accent ? '!border-[#e5566d66]' : ''}`} aria-label={title}>
       <h2 className="dash-label mb-2 !text-[#e5566d]">{title} · {tasks.length}</h2>
       <TaskRows tasks={tasks.slice(0, 4)} />
     </section>
