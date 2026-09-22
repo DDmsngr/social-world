@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, CircleHelp, ListChecks, Paperclip, UserPlus, Users, X } from 'lucide-react'
 import {
-  addGroupMembers, createGroup, fetchAttachments, fetchConvMembers, fetchConversations, fetchMessages,
+  MAX_FILE, addGroupMembers, createGroup, fetchAttachments, fetchConvMembers, fetchConversations, fetchMessages,
   fetchTasks, fetchUnread, markRead, openDirect, sendMessage, uploadFile,
 } from '../api'
 import { useWorkspace } from '../auth'
@@ -158,6 +158,7 @@ function Thread({ conv, title }: { conv: Conversation; title: string }) {
   const [addPeople, setAddPeople] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const bottom = useRef<HTMLDivElement>(null)
+  const textarea = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => { setOlder([]); setExhausted(false); setTaskRef(null); setPendingFiles([]) }, [conv.id])
 
@@ -214,6 +215,7 @@ function Thread({ conv, title }: { conv: Conversation; title: string }) {
     },
     onSuccess: () => {
       setBody(''); setPendingFiles([]); setTaskRef(null)
+      if (textarea.current) textarea.current.style.height = ''
       qc.invalidateQueries({ queryKey: ['messages'] }); qc.invalidateQueries({ queryKey: ['attachments'] })
     },
     onError: e => toast(errMsg(e), 'error'),
@@ -222,6 +224,16 @@ function Thread({ conv, title }: { conv: Conversation; title: string }) {
     e.preventDefault()
     if (/^\/help\s*$/i.test(body.trim())) { setBody(''); setHelp(true); return }
     if (body.trim() || taskRef || pendingFiles.length) send.mutate()
+  }
+
+  // проверяем размер сразу при выборе файла — иначе о слишком большом скрине
+  // узнаёшь только после «Отправить», и на телефоне легко пропустить тост
+  const pickFiles = (list: FileList | null) => {
+    const picked = Array.from(list ?? [])
+    const ok = picked.filter(f => f.size <= MAX_FILE)
+    const big = picked.filter(f => f.size > MAX_FILE)
+    if (ok.length) setPendingFiles(p => [...p, ...ok])
+    if (big.length) toast(`Не прикрепится, больше 25 МБ: ${big.map(f => f.name).join(', ')}`, 'error')
   }
 
   const memberNames = (groupMembers.data ?? []).map(id => byUser(id)?.name).filter(Boolean).join(', ')
@@ -277,14 +289,25 @@ function Thread({ conv, title }: { conv: Conversation; title: string }) {
               <button type="button" className="ml-1" onClick={() => setPendingFiles(p => p.filter((_, j) => j !== i))} aria-label={`Убрать ${f.name}`}><X className="h-3 w-3" aria-hidden /></button></li>)}
           </ul>
         )}
-        <div className="flex items-end gap-2">
-          <input ref={fileInput} type="file" multiple className="sr-only" tabIndex={-1} aria-label="Файлы к сообщению" data-testid="msg-file"
-            onChange={e => { setPendingFiles(p => [...p, ...Array.from(e.target.files ?? [])]); e.target.value = '' }} />
-          <button type="button" className="dash-btn dash-btn-ghost !px-3" onClick={() => fileInput.current?.click()} aria-label="Прикрепить файлы"><Paperclip className="h-4 w-4" aria-hidden /></button>
-          <button type="button" className="dash-btn dash-btn-ghost !px-3" onClick={() => setPickTask(true)} aria-label="Прикрепить задачу"><ListChecks className="h-4 w-4" aria-hidden /></button>
-          <textarea className="dash-input !min-h-10 flex-1" rows={1} aria-label="Сообщение" placeholder="Сообщение… (Markdown, /task 12, /help)" value={body} onChange={e => setBody(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(e as unknown as FormEvent) } }} />
-          <button type="button" className="dash-btn dash-btn-ghost !px-3" onClick={() => setHelp(true)} aria-label="Справка по командам и Markdown"><CircleHelp className="h-4 w-4" aria-hidden /></button>
+        {/* поле на всю ширину отдельной строкой — иначе на телефоне ему остаётся
+            десяток пикселей между четырьмя кнопками-иконками и «Отправить» */}
+        <textarea ref={textarea} className="dash-input mb-2 max-h-40 min-h-11 resize-none overflow-y-auto"
+          rows={1} aria-label="Сообщение" placeholder="Сообщение… (Markdown, /task 12, /help)" value={body}
+          enterKeyHint="send"
+          onChange={e => {
+            setBody(e.target.value)
+            e.target.style.height = 'auto'
+            e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`
+          }}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(e as unknown as FormEvent) } }} />
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1">
+            <input ref={fileInput} type="file" multiple className="sr-only" tabIndex={-1} aria-label="Файлы к сообщению" data-testid="msg-file"
+              onChange={e => { pickFiles(e.target.files); e.target.value = '' }} />
+            <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => fileInput.current?.click()} aria-label="Прикрепить файлы"><Paperclip className="h-4 w-4" aria-hidden /></button>
+            <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => setPickTask(true)} aria-label="Прикрепить задачу"><ListChecks className="h-4 w-4" aria-hidden /></button>
+            <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => setHelp(true)} aria-label="Справка по командам и Markdown"><CircleHelp className="h-4 w-4" aria-hidden /></button>
+          </div>
           <button className="dash-btn" disabled={send.isPending || (!body.trim() && !taskRef && !pendingFiles.length)}>Отправить</button>
         </div>
       </form>

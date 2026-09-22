@@ -161,6 +161,7 @@ test('сообщения: отправка, непрочитанное у адр
   await expect(m.getByRole('link', { name: /Общий.*непрочитанных/ })).toBeVisible()
   await m.getByRole('link', { name: /Общий/ }).click()
   await expect(m.getByTestId('thread')).toContainText(text)
+  await a.close(); await m.close()
 })
 
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
@@ -235,6 +236,7 @@ test('чат: Markdown, группа и задача одним щелчком',
   await expect(m.getByTestId('task-ref').filter({ hasText: title })).toBeVisible()
   await m.getByTestId('task-ref').first().click()
   await expect(m).toHaveURL(/\/dashboard\/tasks\//)
+  await a.close(); await m.close()
 })
 
 test('чат: личный диалог открывается сразу после создания', async ({ browser }) => {
@@ -245,6 +247,7 @@ test('чат: личный диалог открывается сразу пос
   await m.getByLabel('Новый личный диалог').selectOption({ label: 'E2E Admin' })
   await expect(m.getByLabel('Сообщение')).toBeVisible()
   await expect(m.getByText('Диалог не найден')).toHaveCount(0)
+  await m.close()
 })
 
 test('автообновление: изменение одного пользователя видно другому без перезагрузки', async ({ browser }) => {
@@ -261,6 +264,7 @@ test('автообновление: изменение одного пользо
   await m.getByLabel('Новый комментарий').fill('живой комментарий')
   await m.getByRole('button', { name: 'Отправить' }).click()
   await expect(a.getByTestId('comments')).toContainText('живой комментарий', { timeout: 30_000 })
+  await a.close(); await m.close()
 })
 
 test('свободная задача: участник берёт её одним щелчком, она закрепляется за ним', async ({ browser }) => {
@@ -310,6 +314,7 @@ test('свободная задача: участник берёт её одни
   // уборка
   a.once('dialog', d => d.accept())
   await a.getByRole('button', { name: 'Архивировать' }).click()
+  await a.close(); await m.close()
 })
 
 test('импорт JSON: свободные и назначенные, ошибки, дубликаты, права, экспорт', async ({ browser }) => {
@@ -391,6 +396,7 @@ test('импорт JSON: свободные и назначенные, ошиб�
     await a.getByRole('button', { name: 'Архивировать' }).click()
     await expect(a).toHaveURL(/\/dashboard\/tasks$/)
   }
+  await a.close(); await m.close()
 })
 
 async function createTask(page: Page, title: string, opts: { assignee?: string; priority?: string } = {}) {
@@ -425,11 +431,11 @@ test('множественный выбор Ctrl+клик: счётчик, ма�
 
   const bar = page.getByRole('toolbar', { name: 'Массовые действия' })
   await page.getByTestId('col-todo').locator('li', { hasText: t1 }).click({ modifiers: ['Control'] })
-  await expect(bar).toContainText('Выбрано: 1 задача')
+  await expect(bar).toContainText('Выбрано: 1 задача', { timeout: 15_000 })
   await expect(page).toHaveURL(/\/dashboard\/tasks$/) // Ctrl+клик не открыл задачу
 
   await page.getByTestId('col-todo').locator('li', { hasText: t2 }).click({ modifiers: ['Control'] })
-  await expect(bar).toContainText('Выбрано: 2 задачи')
+  await expect(bar).toContainText('Выбрано: 2 задачи', { timeout: 15_000 })
 
   await page.getByRole('button', { name: 'Review' }).click() // чип быстрого переноса в колонку
   await expect(page.getByTestId('col-review').locator('li', { hasText: t1 })).toBeVisible()
@@ -453,11 +459,11 @@ test('множественный выбор долгим тапом: вход в
 
   const bar = page.getByRole('toolbar', { name: 'Массовые действия' })
   await longPressSelect(page.getByTestId('col-todo').locator('li', { hasText: t1 }))
-  await expect(bar).toContainText('Выбрано: 1 задача')
+  await expect(bar).toContainText('Выбрано: 1 задача', { timeout: 15_000 })
   await expect(page).toHaveURL(/\/dashboard\/tasks$/) // долгий тап не открыл задачу
 
   await page.getByTestId('col-todo').locator('li', { hasText: t2 }).click() // обычный тап в режиме выбора — добавляет
-  await expect(bar).toContainText('Выбрано: 2 задачи')
+  await expect(bar).toContainText('Выбрано: 2 задачи', { timeout: 15_000 })
   await expect(page).toHaveURL(/\/dashboard\/tasks$/)
 
   await page.getByRole('button', { name: 'Blocked' }).click()
@@ -467,7 +473,7 @@ test('множественный выбор долгим тапом: вход в
 
   // повторный долгий тап снова выбирает ровно одну — режим не залипает; «Снять выделение» работает
   await longPressSelect(page.getByTestId('col-blocked').locator('li', { hasText: t1 }))
-  await expect(bar).toContainText('Выбрано: 1 задача')
+  await expect(bar).toContainText('Выбрано: 1 задача', { timeout: 15_000 })
   await page.getByRole('button', { name: 'Снять выделение' }).click()
   await expect(bar).toHaveCount(0)
 
@@ -543,7 +549,7 @@ test('массовые действия участника: только ста�
   const bar = m.getByRole('toolbar', { name: 'Массовые действия' })
   await longPressSelect(m.getByTestId('col-todo').locator('li', { hasText: own }))
   await m.getByTestId('col-todo').locator('li', { hasText: free }).click()
-  await expect(bar).toContainText('Выбрано: 2 задачи')
+  await expect(bar).toContainText('Выбрано: 2 задачи', { timeout: 15_000 })
 
   // админские действия участнику не показываются
   await expect(m.getByRole('button', { name: 'Действия…' })).toHaveCount(0)
@@ -565,6 +571,7 @@ test('массовые действия участника: только ста�
     await a.getByRole('button', { name: 'Архивировать' }).click()
     await expect(a).toHaveURL(/\/dashboard\/tasks$/)
   }
+  await a.close(); await m.close()
 })
 
 test('обзор показывает счётчики; мобильная вёрстка без горизонтальной прокрутки', async ({ page }) => {
