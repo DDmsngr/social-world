@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 import type {
-  ActivityEvent, Attachment, Conversation, Invitation, Label, Member, Message,
+  ActivityEvent, AppRelease, Attachment, Conversation, Invitation, Label, Member, Message,
   Notification, Project, Task, TaskComment, TaskFilters, TaskStatus, Workspace,
 } from './types'
 import { PRIORITIES, plusDaysIso, todayIso } from './meta'
@@ -303,6 +303,17 @@ export async function fetchActivity(workspaceId: string, page: number, only: { e
 export async function fetchNotifications(workspaceId: string) {
   return check(await supabase.from('ws_notifications').select('*').eq('workspace_id', workspaceId)
     .order('created_at', { ascending: false }).limit(50)) as Notification[]
+}
+
+// ── релизы APK ──────────────────────────────────────────────────────────────
+
+export async function fetchReleases(workspaceId: string) {
+  return check(await supabase.from('ws_app_releases').select('*').eq('workspace_id', workspaceId)
+    .order('version_code', { ascending: false }).limit(50)) as AppRelease[]
+}
+
+export async function updateReleaseNotes(id: string, notes: string) {
+  check(await supabase.from('ws_app_releases').update({ notes }).eq('id', id).select('id').single())
 }
 
 export async function markNotifications(ids: string[]) {

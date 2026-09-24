@@ -14,6 +14,7 @@ import TaskDetail from './pages/TaskDetail'
 import Team from './pages/Team'
 import MemberProfile from './pages/MemberProfile'
 import Files from './pages/Files'
+import Releases from './pages/Releases'
 import FilePage from './pages/FilePage'
 import Messages from './pages/Messages'
 import SearchPage from './pages/SearchPage'
@@ -81,6 +82,7 @@ export default function DashboardApp() {
                 <Route path="team/:userId" element={<MemberProfile />} />
                 <Route path="files" element={<Files />} />
                 <Route path="files/:id" element={<FilePage />} />
+                <Route path="releases" element={<Releases />} />
                 <Route path="messages" element={<Messages />} />
                 <Route path="messages/:convId" element={<Messages />} />
                 <Route path="search" element={<SearchPage />} />

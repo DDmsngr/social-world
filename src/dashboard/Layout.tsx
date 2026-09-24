@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Bell, FolderOpen, LayoutDashboard, ListChecks, LogOut, MessageSquare, Search, Users } from 'lucide-react'
+import { Bell, FolderOpen, LayoutDashboard, ListChecks, LogOut, MessageSquare, Search, Smartphone, Users } from 'lucide-react'
 import { signOut, useWorkspace } from './auth'
 import { fetchNotifications, fetchUnread } from './api'
 import { Avatar } from './ui'
@@ -12,6 +12,7 @@ const NAV = [
   { to: '/dashboard/tasks', label: 'Задачи', icon: ListChecks },
   { to: '/dashboard/team', label: 'Команда', icon: Users },
   { to: '/dashboard/files', label: 'Файлы', icon: FolderOpen },
+  { to: '/dashboard/releases', label: 'Релизы', icon: Smartphone },
   { to: '/dashboard/messages', label: 'Сообщения', icon: MessageSquare },
 ]
 

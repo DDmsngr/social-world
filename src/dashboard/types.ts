@@ -108,6 +108,19 @@ export interface ActivityEvent {
   created_at: string
 }
 
+export interface AppRelease {
+  id: string
+  workspace_id: string
+  version_code: number
+  version_name: string
+  apk_url: string
+  size_bytes: number | null
+  commit_sha: string | null
+  notes: string
+  created_at: string
+  updated_at: string
+}
+
 export interface Invitation {
   id: string
   member_id: string

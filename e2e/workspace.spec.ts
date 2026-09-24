@@ -574,6 +574,45 @@ test('массовые действия участника: только ста�
   await a.close(); await m.close()
 })
 
+test('релизы: пустой каталог; список, скачивание и правка описания (ответы REST подменены)', async ({ page }) => {
+  await admin(page)
+  await page.getByRole('link', { name: 'Релизы' }).click()
+  await expect(page.getByRole('heading', { name: 'Релизы' })).toBeVisible()
+  // в песочнице CI-публикаций нет — настоящий ответ пуст
+  await expect(page.getByText('Сборок пока нет')).toBeVisible()
+
+  const row = (code: number, name: string, notes: string) => ({
+    id: `00000000-0000-0000-0000-${String(code).padStart(12, '0')}`, workspace_id: '11111111-1111-1111-1111-111111111111',
+    version_code: code, version_name: name, apk_url: `https://example.test/social-world-${code}.apk`, size_bytes: 61_000_000,
+    commit_sha: 'abcdef1234567', notes, created_at: '2026-09-24T10:00:00Z', updated_at: '2026-09-24T10:00:00Z',
+  })
+  let saved = ''
+  await page.route('**/rest/v1/ws_app_releases*', async route => {
+    const req = route.request()
+    if (req.method() === 'PATCH') {
+      saved = (req.postDataJSON() as { notes: string }).notes
+      return route.fulfill({ json: row(5101, '1.2.0', saved) })
+    }
+    return route.fulfill({ json: [row(5101, '1.2.0', '- добавили карту\n- починили лайки'), row(5100, '1.1.9', '')] })
+  })
+  await page.reload()
+
+  const cards = page.getByTestId('release')
+  await expect(cards).toHaveCount(2)
+  await expect(cards.first().getByText('Последняя')).toBeVisible()
+  await expect(cards.first().getByRole('listitem')).toHaveCount(2)
+  await expect(cards.first().getByRole('link', { name: 'Скачать APK' })).toHaveAttribute('href', 'https://example.test/social-world-5101.apk')
+  await expect(cards.nth(1).getByText('Описание не заполнено')).toBeVisible()
+
+  await cards.first().getByRole('button', { name: 'Изменить описание' }).click()
+  await cards.first().getByRole('textbox').fill('- новая правка')
+  await cards.first().getByRole('button', { name: 'Сохранить' }).click()
+  await expect(page.getByText('Описание сохранено')).toBeVisible()
+  expect(saved).toBe('- новая правка')
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
+})
+
 test('обзор показывает счётчики; мобильная вёрстка без горизонтальной прокрутки', async ({ page }) => {
   await admin(page)
   await expect(page.getByTestId('stat-total')).toBeVisible()
