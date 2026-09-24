@@ -174,16 +174,17 @@ export function TaskCardBody({ task }: { task: Task }) {
   return (
     <>
       <div className="flex items-start justify-between gap-2">
-        <Link to={`/dashboard/tasks/${task.id}`} draggable={false} className="text-sm font-medium leading-snug hover:underline">
+        <Link to={`/dashboard/tasks/${task.id}`} draggable={false} className="min-w-0 flex-1 text-sm font-medium leading-snug hover:underline">
           <span className="dash-muted mr-1 font-mono text-xs font-normal">#{task.num}</span>{task.title}
         </Link>
-        {free ? <ClaimButton task={task} compact /> : <Avatar member={byUser(task.assignee_id)} size={24} />}
+        {!free && <Avatar member={byUser(task.assignee_id)} size={24} />}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <PriorityChip priority={task.priority} />
         <LabelChips ids={task.label_ids} />
       </div>
-      <div className="mt-2 flex items-center gap-3">
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        {free && <span className="order-last ml-auto"><ClaimButton task={task} compact /></span>}
         <DueLabel task={task} />
         {task.comment_count > 0 && (
           <span className="dash-muted inline-flex items-center gap-1 text-xs" title="Комментарии">
