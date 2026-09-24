@@ -479,7 +479,7 @@ test('множественный выбор долгим тапом: вход в
 
   // уборка
   for (const t of [t1, t2]) {
-    await page.getByTestId('col-blocked').locator('li', { hasText: t }).click()
+    await page.getByTestId('col-blocked').getByRole('link', { name: new RegExp(t) }).click() // центр карточки на мобильном — кнопка «Взять»
     page.once('dialog', d => d.accept())
     await page.getByRole('button', { name: 'Архивировать' }).click()
     await expect(page).toHaveURL(/\/dashboard\/tasks$/)
@@ -505,11 +505,11 @@ test('массовые действия админа: изменить поля 
   await dlg.getByRole('button', { name: 'Применить' }).click()
   await expect(bar).toHaveCount(0)
 
-  await page.getByTestId('col-todo').locator('li', { hasText: t1 }).click()
+  await page.getByTestId('col-todo').getByRole('link', { name: new RegExp(t1) }).click()
   await expect(page.getByLabel('Приоритет')).toHaveValue('critical')
   await expect(page.getByLabel('Срок')).toHaveValue('2031-06-15')
   await page.goto('dashboard/tasks')
-  await page.getByTestId('col-todo').locator('li', { hasText: t2 }).click()
+  await page.getByTestId('col-todo').getByRole('link', { name: new RegExp(t2) }).click()
   await expect(page.getByLabel('Приоритет')).toHaveValue('critical')
   await page.goto('dashboard/tasks')
 
