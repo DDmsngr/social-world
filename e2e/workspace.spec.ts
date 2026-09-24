@@ -613,6 +613,18 @@ test('релизы: пустой каталог; список, скачиван�
   expect(overflow).toBeLessThanOrEqual(0)
 })
 
+test('заголовок колонки открывает список только с этим статусом', async ({ page }) => {
+  await admin(page)
+  await page.goto('dashboard/tasks')
+  await page.getByTestId('col-done').getByRole('link').first().click()
+  await expect(page).toHaveURL(/status=done/)
+  await expect(page).toHaveURL(/view=list/)
+  await expect(page.getByLabel('Статус')).toHaveValue('done')
+  await expect(page.getByTestId('board')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Сбросить' }).click()
+  await expect(page.getByLabel('Статус')).toHaveValue('')
+})
+
 test('обзор показывает счётчики; мобильная вёрстка без горизонтальной прокрутки', async ({ page }) => {
   await admin(page)
   await expect(page.getByTestId('stat-total')).toBeVisible()

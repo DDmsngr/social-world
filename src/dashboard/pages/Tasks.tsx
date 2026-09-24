@@ -238,9 +238,12 @@ function Column({ status, tasks, canMove, onCreate }: {
     <section ref={setNodeRef} aria-label={meta.label} data-testid={`col-${status}`}
       className={`flex w-[78vw] max-w-72 shrink-0 snap-center flex-col rounded-2xl border bg-[var(--d-surface)] p-2.5 md:w-64 md:max-w-none xl:flex-1 xl:min-w-52 ${isOver ? 'border-[var(--d-champagne)]' : 'border-[var(--d-line)]'}`}>
       <div className="mb-2 flex items-center justify-between px-1">
-        <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-          <span className="h-2 w-2 rounded-full" style={{ background: meta.color }} aria-hidden />
-          {meta.label} <span className="dash-muted font-normal" data-testid="count">{tasks.length}</span>
+        <h2 className="text-xs font-semibold uppercase tracking-wider">
+          <Link to={`/dashboard/tasks?status=${status}&view=list`} className="flex items-center gap-2 hover:underline"
+            title={`Показать только «${meta.label}» списком`}>
+            <span className="h-2 w-2 rounded-full" style={{ background: meta.color }} aria-hidden />
+            {meta.label} <span className="dash-muted font-normal" data-testid="count">{tasks.length}</span>
+          </Link>
         </h2>
         {onCreate && (
           <button className="dash-btn dash-btn-ghost dash-btn-sm !min-h-7 !px-2" onClick={() => onCreate(status)} aria-label={`Добавить задачу в ${meta.label}`}>
