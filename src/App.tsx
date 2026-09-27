@@ -15,6 +15,7 @@ import Ask from './components/Ask'
 import Footer from './components/Footer'
 
 const DashboardApp = lazy(() => import('./dashboard/DashboardApp'))
+const ReferralDownload = lazy(() => import('./components/ReferralDownload'))
 
 export default function App() {
   return (
@@ -22,6 +23,13 @@ export default function App() {
       <Routes>
         <Route path="/dashboard/*" element={
           <Suspense fallback={<div className="bg-ink min-h-screen" />}><DashboardApp /></Suspense>
+        } />
+        {/* Реферальный QR у места — social-world-app/lib/core/links/deep_links.dart
+            (DeepLinks.referralShareUri). Если приложение уже стоит, тот же
+            адрес открывает его напрямую через intent-filter, сюда попадают
+            только те, у кого его ещё нет. */}
+        <Route path="/o/ref/:code" element={
+          <Suspense fallback={<div className="bg-ink min-h-screen" />}><ReferralDownload /></Suspense>
         } />
         <Route path="*" element={<Landing />} />
       </Routes>
