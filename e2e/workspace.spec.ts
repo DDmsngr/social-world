@@ -164,6 +164,53 @@ test('сообщения: отправка, непрочитанное у адр
   await a.close(); await m.close()
 })
 
+test('голосовое и видео: запись прямо в браузере, отправка, проигрывание @desktop-only', async ({ page, browserName }) => {
+  // Фейковая камера/микрофон включены только в проекте desktop (playwright.config.ts);
+  // на mobile (Pixel 7) getUserMedia никто не подтвердит.
+  test.skip(browserName !== 'chromium', 'фейковое медиаустройство — только Chromium')
+  await admin(page)
+  await page.goto('dashboard/messages')
+  await page.getByRole('link', { name: /Общий/ }).click()
+
+  await page.getByTestId('record-audio').click()
+  await expect(page.getByText('Запись голосового…')).toBeVisible()
+  await page.waitForTimeout(1200) // короткая, но не меньше секунды — иначе recorder.ts её отбрасывает как случайный клик
+  await page.getByTestId('record-stop').click()
+  await expect(page.getByText('Голосовое')).toBeVisible()
+
+  await page.getByTestId('record-video').click()
+  await expect(page.getByText('Запись видео…')).toBeVisible()
+  await page.waitForTimeout(1200)
+  await page.getByTestId('record-stop').click()
+  await expect(page.getByText('Видео')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Отправить' }).click()
+  // прошлые прогоны этого же теста оставляют в «Общем» свои голосовые/видео —
+  // песочница, ими никто не пользуется всерьёз; берём последние (свои).
+  const audio = page.getByTestId('thread').locator('audio').last()
+  const video = page.getByTestId('thread').locator('video').last()
+  // загрузка двух настоящих (пусть и коротких) blob-ов на сервер — не мгновенная,
+  // плюс список сообщений сам перечитывается не чаще раза в 5 секунд (refetchInterval)
+  await expect(audio).toBeVisible({ timeout: 20_000 })
+  await expect(video).toBeVisible({ timeout: 20_000 })
+
+  // не просто отрисовались — оба реально проигрываемы (есть звуковая/видео дорожка).
+  // readyState проверяем сразу: метаданные могли догрузиться ещё до evaluate,
+  // и тогда loadedmetadata уже не наступит — ждать его в этом случае нечего.
+  const audioOk = await audio.evaluate(
+    (el: HTMLAudioElement) => el.readyState >= 1 ? el.duration > 0
+      : new Promise(r => { el.onloadedmetadata = () => r(el.duration > 0); el.onerror = () => r(false) }))
+  const videoOk = await video.evaluate(
+    (el: HTMLVideoElement) => el.readyState >= 1 ? el.videoWidth > 0
+      : new Promise(r => { el.onloadedmetadata = () => r(el.videoWidth > 0); el.onerror = () => r(false) }))
+  expect(audioOk).toBe(true)
+  expect(videoOk).toBe(true)
+
+  await page.reload()
+  await expect(page.getByTestId('thread').locator('audio').last()).toBeVisible()
+  await expect(page.getByTestId('thread').locator('video').last()).toBeVisible()
+})
+
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
 
 test('комментарий с файлами: ссылки «скрин-N» в тексте и предпросмотр', async ({ page }) => {

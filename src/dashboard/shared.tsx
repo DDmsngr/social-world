@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Download, ExternalLink, FileText, Trash2, Upload } from 'lucide-react'
 import {
-  PAGE, deleteAttachment, fetchActivity, fileLabels, isImage, signedUrl, uploadFile,
+  PAGE, deleteAttachment, fetchActivity, fileLabels, isAudio, isImage, isVideo, signedUrl, uploadFile,
 } from './api'
 import { useWorkspace } from './auth'
 import { describeActivity, fmtDateTime, fmtSize, timeAgo } from './meta'
@@ -84,10 +84,10 @@ export function UploadButton({ target, label = 'Прикрепить файлы'
 
 // ── превью ──────────────────────────────────────────────────────────────────
 
-/** Ссылка на картинку живёт час; кеш чуть меньше, чтобы не отдавать протухшую. */
-function useImageUrl(a: Attachment, enabled = true) {
+/** Ссылка на файл живёт час; кеш чуть меньше, чтобы не отдавать протухшую. */
+function useFileUrl(a: Attachment, enabled = true) {
   return useQuery({
-    queryKey: ['img-url', a.id],
+    queryKey: ['file-url', a.id],
     queryFn: () => signedUrl(a.storage_path, undefined, 3600),
     enabled, staleTime: 50 * 60_000, gcTime: 55 * 60_000, refetchInterval: false,
   })
@@ -95,7 +95,7 @@ function useImageUrl(a: Attachment, enabled = true) {
 
 export function Thumb({ file, size = 48 }: { file: Attachment; size?: number }) {
   const img = isImage(file)
-  const url = useImageUrl(file, img)
+  const url = useFileUrl(file, img)
   const box = { width: size, height: size }
   if (!img) {
     return <span className="grid shrink-0 place-items-center rounded-lg border border-[var(--d-line)] bg-[var(--d-bg)]" style={box}><FileText className="h-5 w-5 dash-muted" aria-hidden /></span>
@@ -105,8 +105,24 @@ export function Thumb({ file, size = 48 }: { file: Attachment; size?: number }) 
     : <span className="shrink-0 rounded-lg border border-[var(--d-line)] bg-[var(--d-bg)]" style={box} aria-hidden />
 }
 
+/** Голосовое/видео проигрывается прямо в ленте — родными controls браузера,
+    без своего плеера: перемотка, звук, полный экран у видео уже есть. */
+export function AudioPlayer({ file }: { file: Attachment }) {
+  const url = useFileUrl(file)
+  if (!url.data) return <div className="h-10 w-56 max-w-full animate-pulse rounded-lg bg-[var(--d-raised)]" aria-hidden />
+  // eslint-disable-next-line jsx-a11y/media-has-caption -- голосовое сообщение, титров нет по смыслу
+  return <audio controls preload="metadata" src={url.data} className="h-10 w-64 max-w-full" />
+}
+
+export function VideoPlayer({ file }: { file: Attachment }) {
+  const url = useFileUrl(file)
+  if (!url.data) return <div className="aspect-video w-64 max-w-full animate-pulse rounded-lg bg-[var(--d-raised)]" aria-hidden />
+  // eslint-disable-next-line jsx-a11y/media-has-caption
+  return <video controls preload="metadata" src={url.data} className="max-h-60 w-64 max-w-full rounded-lg bg-black" />
+}
+
 export function ImagePreview({ file, onClose }: { file: Attachment | null; onClose: () => void }) {
-  const url = useImageUrl(file ?? ({ id: '', storage_path: '' } as Attachment), !!file)
+  const url = useFileUrl(file ?? ({ id: '', storage_path: '' } as Attachment), !!file)
   return (
     <Modal open={!!file} onClose={onClose} title={file?.filename ?? ''}>
       {url.data
@@ -147,11 +163,15 @@ export function FileList({ files, showTask, labelsFrom }: {
   return (
     <>
       <ul data-testid="files">
-        {files.map(a => (
-          <li key={a.id} className="dash-row flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5">
-            {isImage(a)
+        {files.map(a => {
+          const media = isAudio(a) ? 'audio' : isVideo(a) ? 'video' : null
+          return (
+          <li key={a.id} className={`dash-row flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 ${media ? 'items-start' : ''}`}>
+            {media === 'audio' && <AudioPlayer file={a} />}
+            {media === 'video' && <VideoPlayer file={a} />}
+            {!media && (isImage(a)
               ? <button type="button" onClick={() => setPreview(a)} aria-label={`Просмотр ${a.filename}`}><Thumb file={a} /></button>
-              : <Thumb file={a} />}
+              : <Thumb file={a} />)}
             <div className="min-w-0 flex-1 basis-40">
               <div className="truncate text-sm font-medium">
                 <Link to={`/dashboard/files/${a.id}`} className="hover:underline">{a.filename}</Link>
@@ -176,7 +196,8 @@ export function FileList({ files, showTask, labelsFrom }: {
               )}
             </div>
           </li>
-        ))}
+          )
+        })}
       </ul>
       <ImagePreview file={preview} onClose={() => setPreview(null)} />
     </>

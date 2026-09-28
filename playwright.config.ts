@@ -18,7 +18,17 @@ export default defineConfig({
     reuseExistingServer: true,
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'desktop',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Голосовые/видео (Messages.tsx, recorder.tsx) просят getUserMedia —
+        // без этих флагов Chromium либо просит настоящую камеру, либо просто
+        // отказывает без диалога, которым в headless некому ответить.
+        permissions: ['microphone', 'camera'],
+        launchOptions: { args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] },
+      },
+    },
     { name: 'mobile', use: { ...devices['Pixel 7'] }, grepInvert: /@desktop-only/ },
   ],
 })

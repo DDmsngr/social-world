@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download } from 'lucide-react'
-import { fetchAttachment, isImage, signedUrl } from '../api'
+import { fetchAttachment, isAudio, isImage, isVideo, signedUrl } from '../api'
 import { fmtDateTime, fmtSize } from '../meta'
 import { useWorkspace } from '../auth'
 import { QueryState } from '../ui'
@@ -13,7 +13,7 @@ export default function FilePage() {
   const file = useQuery({ queryKey: ['attachment', id], queryFn: () => fetchAttachment(id) })
   const f = file.data
   const url = useQuery({
-    queryKey: ['img-url', id], queryFn: () => signedUrl(f!.storage_path, undefined, 3600),
+    queryKey: ['file-url', id], queryFn: () => signedUrl(f!.storage_path, undefined, 3600),
     enabled: !!f, staleTime: 50 * 60_000, refetchInterval: false,
   })
   const dl = useQuery({
@@ -32,9 +32,13 @@ export default function FilePage() {
             <h1 className="break-all text-xl font-semibold">{f.filename}</h1>
             <p className="dash-muted mt-1 text-sm">{fmtSize(f.size)} · {byUser(f.uploader_id)?.name ?? '—'} · {fmtDateTime(f.created_at)}</p>
             <div className="dash-card mt-4 p-3">
-              {isImage(f) && url.data
-                ? <img src={url.data} alt={f.filename} className="mx-auto max-h-[75dvh] max-w-full rounded-lg object-contain" />
-                : <p className="dash-muted p-6 text-center text-sm">{isImage(f) ? 'Готовим просмотр…' : 'Для этого типа файла предпросмотра нет.'}</p>}
+              {isImage(f) && url.data && <img src={url.data} alt={f.filename} className="mx-auto max-h-[75dvh] max-w-full rounded-lg object-contain" />}
+              {/* eslint-disable jsx-a11y/media-has-caption */}
+              {isAudio(f) && url.data && <audio controls preload="metadata" src={url.data} className="mx-auto block w-full max-w-md" />}
+              {isVideo(f) && url.data && <video controls preload="metadata" src={url.data} className="mx-auto max-h-[75dvh] max-w-full rounded-lg" />}
+              {/* eslint-enable jsx-a11y/media-has-caption */}
+              {!url.data && (isImage(f) || isAudio(f) || isVideo(f)) && <p className="dash-muted p-6 text-center text-sm">Готовим просмотр…</p>}
+              {!isImage(f) && !isAudio(f) && !isVideo(f) && <p className="dash-muted p-6 text-center text-sm">Для этого типа файла предпросмотра нет.</p>}
             </div>
             {dl.data && <a className="dash-btn mt-4" href={dl.data}><Download className="h-4 w-4" aria-hidden /> Скачать</a>}
           </>

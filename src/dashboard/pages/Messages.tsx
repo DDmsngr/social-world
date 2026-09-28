@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, CircleHelp, ListChecks, Paperclip, UserPlus, Users, X } from 'lucide-react'
+import { ArrowLeft, CircleHelp, ListChecks, Mic, Paperclip, Square, UserPlus, Users, Video, X } from 'lucide-react'
 import {
   MAX_FILE, addGroupMembers, createGroup, fetchAttachments, fetchConvMembers, fetchConversations, fetchMessages,
   fetchTasks, fetchUnread, markRead, openDirect, sendMessage, uploadFile,
 } from '../api'
 import { useWorkspace } from '../auth'
 import { fmtDateTime } from '../meta'
+import { fmtRecTime, useRecorder } from '../recorder'
 import type { Conversation, Message, Task } from '../types'
 import { Avatar, Field, Modal, PageHeader, QueryState, errMsg, useToast } from '../ui'
 import { FileList } from '../shared'
@@ -160,7 +161,8 @@ function Thread({ conv, title }: { conv: Conversation; title: string }) {
   const bottom = useRef<HTMLDivElement>(null)
   const textarea = useRef<HTMLTextAreaElement>(null)
 
-  useEffect(() => { setOlder([]); setExhausted(false); setTaskRef(null); setPendingFiles([]) }, [conv.id])
+  const rec = useRecorder()
+  useEffect(() => { setOlder([]); setExhausted(false); setTaskRef(null); setPendingFiles([]); rec.cancel() }, [conv.id])
 
   const tasks = useQuery({ queryKey: ['tasks', project.id, { sort: 'priority' }], queryFn: () => fetchTasks(project.id, { sort: 'priority' }) })
   const taskById = useMemo(() => new Map((tasks.data ?? []).map(t => [t.id, t])), [tasks.data])
@@ -233,7 +235,16 @@ function Thread({ conv, title }: { conv: Conversation; title: string }) {
     const ok = picked.filter(f => f.size <= MAX_FILE)
     const big = picked.filter(f => f.size > MAX_FILE)
     if (ok.length) setPendingFiles(p => [...p, ...ok])
-    if (big.length) toast(`Не прикрепится, больше 25 МБ: ${big.map(f => f.name).join(', ')}`, 'error')
+    if (big.length) toast(`Не прикрепится, больше ${MAX_FILE / 1024 / 1024} МБ: ${big.map(f => f.name).join(', ')}`, 'error')
+  }
+
+  const startRecording = async (kind: 'audio' | 'video') => {
+    try { await rec.start(kind) }
+    catch { toast(kind === 'video' ? 'Нет доступа к камере/микрофону' : 'Нет доступа к микрофону', 'error') }
+  }
+  const finishRecording = async () => {
+    const file = await rec.stop()
+    if (file) setPendingFiles(p => [...p, file])
   }
 
   const memberNames = (groupMembers.data ?? []).map(id => byUser(id)?.name).filter(Boolean).join(', ')
@@ -285,31 +296,43 @@ function Thread({ conv, title }: { conv: Conversation; title: string }) {
           <ul className="mb-2 flex flex-wrap gap-1.5" aria-label="Вложения">
             {taskRef && <li className="dash-chip"><ListChecks className="h-3 w-3" aria-hidden /> #{taskRef.num} {taskRef.title.slice(0, 40)}
               <button type="button" className="ml-1" onClick={() => setTaskRef(null)} aria-label="Убрать задачу"><X className="h-3 w-3" aria-hidden /></button></li>}
-            {pendingFiles.map((f, i) => <li key={i} className="dash-chip"><Paperclip className="h-3 w-3" aria-hidden /> {f.name}
-              <button type="button" className="ml-1" onClick={() => setPendingFiles(p => p.filter((_, j) => j !== i))} aria-label={`Убрать ${f.name}`}><X className="h-3 w-3" aria-hidden /></button></li>)}
+            {pendingFiles.map((f, i) => {
+              const RecIcon = f.type.startsWith('audio/') ? Mic : f.type.startsWith('video/') ? Video : Paperclip
+              const label = f.type.startsWith('audio/') ? 'Голосовое' : f.type.startsWith('video/') ? 'Видео' : f.name
+              return <li key={i} className="dash-chip"><RecIcon className="h-3 w-3" aria-hidden /> {label}
+                <button type="button" className="ml-1" onClick={() => setPendingFiles(p => p.filter((_, j) => j !== i))} aria-label={`Убрать ${f.name}`}><X className="h-3 w-3" aria-hidden /></button></li>
+            })}
           </ul>
         )}
-        {/* поле на всю ширину отдельной строкой — иначе на телефоне ему остаётся
-            десяток пикселей между четырьмя кнопками-иконками и «Отправить» */}
-        <textarea ref={textarea} className="dash-input mb-2 max-h-40 min-h-11 resize-none overflow-y-auto"
-          rows={1} aria-label="Сообщение" placeholder="Сообщение… (Markdown, /task 12, /help)" value={body}
-          enterKeyHint="send"
-          onChange={e => {
-            setBody(e.target.value)
-            e.target.style.height = 'auto'
-            e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`
-          }}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(e as unknown as FormEvent) } }} />
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1">
-            <input ref={fileInput} type="file" multiple className="sr-only" tabIndex={-1} aria-label="Файлы к сообщению" data-testid="msg-file"
-              onChange={e => { pickFiles(e.target.files); e.target.value = '' }} />
-            <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => fileInput.current?.click()} aria-label="Прикрепить файлы"><Paperclip className="h-4 w-4" aria-hidden /></button>
-            <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => setPickTask(true)} aria-label="Прикрепить задачу"><ListChecks className="h-4 w-4" aria-hidden /></button>
-            <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => setHelp(true)} aria-label="Справка по командам и Markdown"><CircleHelp className="h-4 w-4" aria-hidden /></button>
-          </div>
-          <button className="dash-btn" disabled={send.isPending || (!body.trim() && !taskRef && !pendingFiles.length)}>Отправить</button>
-        </div>
+        {rec.recording ? (
+          <RecordingBar recording={rec.recording} previewStream={rec.previewStream} onStop={finishRecording} onCancel={rec.cancel} />
+        ) : (
+          <>
+            {/* поле на всю ширину отдельной строкой — иначе на телефоне ему остаётся
+                десяток пикселей между кнопками-иконками и «Отправить» */}
+            <textarea ref={textarea} className="dash-input mb-2 max-h-40 min-h-11 resize-none overflow-y-auto"
+              rows={1} aria-label="Сообщение" placeholder="Сообщение… (Markdown, /task 12, /help)" value={body}
+              enterKeyHint="send"
+              onChange={e => {
+                setBody(e.target.value)
+                e.target.style.height = 'auto'
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`
+              }}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(e as unknown as FormEvent) } }} />
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1">
+                <input ref={fileInput} type="file" multiple className="sr-only" tabIndex={-1} aria-label="Файлы к сообщению" data-testid="msg-file"
+                  onChange={e => { pickFiles(e.target.files); e.target.value = '' }} />
+                <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => fileInput.current?.click()} aria-label="Прикрепить файлы"><Paperclip className="h-4 w-4" aria-hidden /></button>
+                <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => void startRecording('audio')} aria-label="Записать голосовое" data-testid="record-audio"><Mic className="h-4 w-4" aria-hidden /></button>
+                <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => void startRecording('video')} aria-label="Записать видео" data-testid="record-video"><Video className="h-4 w-4" aria-hidden /></button>
+                <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => setPickTask(true)} aria-label="Прикрепить задачу"><ListChecks className="h-4 w-4" aria-hidden /></button>
+                <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm !min-h-11 !w-11 !px-0" onClick={() => setHelp(true)} aria-label="Справка по командам и Markdown"><CircleHelp className="h-4 w-4" aria-hidden /></button>
+              </div>
+              <button className="dash-btn" disabled={send.isPending || (!body.trim() && !taskRef && !pendingFiles.length)}>Отправить</button>
+            </div>
+          </>
+        )}
       </form>
 
       <TaskPicker open={pickTask} onClose={() => setPickTask(false)} tasks={tasks.data ?? []} onPick={t => { setTaskRef(t); setPickTask(false) }} />
@@ -318,6 +341,36 @@ function Thread({ conv, title }: { conv: Conversation; title: string }) {
         <AddPeopleModal open={addPeople} onClose={() => setAddPeople(false)} convId={conv.id}
           already={groupMembers.data ?? []} candidates={members.filter(m => m.status === 'active' && m.user_id)} />
       )}
+    </div>
+  )
+}
+
+/** Живой предпросмотр с камеры во время записи видео — MediaStream привязывается
+    через ref: React не даёт srcObject как обычный проп. */
+function LivePreview({ stream }: { stream: MediaStream }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  useEffect(() => { if (ref.current) ref.current.srcObject = stream }, [stream])
+  // eslint-disable-next-line jsx-a11y/media-has-caption
+  return <video ref={ref} autoPlay muted playsInline className="h-16 w-16 rounded-lg bg-black object-cover" />
+}
+
+/** Занимает место текстового поля, пока идёт запись голосового/видео — так же,
+    как WhatsApp/Telegram: увидел таймер и кнопку «Стоп», не потерял, где чат. */
+function RecordingBar({ recording, previewStream, onStop, onCancel }: {
+  recording: { kind: 'audio' | 'video'; seconds: number }; previewStream: MediaStream | null
+  onStop: () => void; onCancel: () => void
+}) {
+  return (
+    <div className="mb-2 flex items-center gap-3 rounded-xl border border-[var(--d-line)] bg-[var(--d-raised)] px-3 py-2">
+      {previewStream && <LivePreview stream={previewStream} />}
+      <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-red-500" aria-hidden />
+      <span className="flex-1 text-sm">
+        {recording.kind === 'video' ? 'Запись видео…' : 'Запись голосового…'} <span className="dash-muted font-mono">{fmtRecTime(recording.seconds)}</span>
+      </span>
+      <button type="button" className="dash-btn dash-btn-ghost dash-btn-sm" onClick={onCancel} aria-label="Отменить запись">Отмена</button>
+      <button type="button" className="dash-btn dash-btn-sm" onClick={onStop} aria-label="Остановить запись" data-testid="record-stop">
+        <Square className="h-3.5 w-3.5" aria-hidden /> Стоп
+      </button>
     </div>
   )
 }
@@ -387,7 +440,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
         {row('/help', 'открыть эту справку')}
       </tbody></table>
       <h3 className="dash-label mb-1">Кнопки под полем ввода</h3>
-      <p className="mb-4 text-sm">Скрепка — файлы (можно несколько), значок списка — выбрать задачу из списка одним щелчком. Enter отправляет, Shift+Enter — новая строка.</p>
+      <p className="mb-4 text-sm">Скрепка — файлы (можно несколько), микрофон и камера — записать голосовое или видео прямо в браузере, значок списка — выбрать задачу одним щелчком. Enter отправляет, Shift+Enter — новая строка.</p>
       <h3 className="dash-label mb-1">Markdown</h3>
       <table className="w-full"><tbody>
         {row('**жирный**', 'жирный текст')}

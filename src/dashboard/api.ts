@@ -224,7 +224,9 @@ export async function deleteComment(id: string) {
 // ── файлы ───────────────────────────────────────────────────────────────────
 
 const BUCKET = 'ws-files'
-export const MAX_FILE = 25 * 1024 * 1024
+// Голосовые/видео крупнее обычных вложений — поднято миграцией 0029
+// (ws-files: 25 → 100 МБ; серверный предел Storage — 250 МБ).
+export const MAX_FILE = 100 * 1024 * 1024
 
 const safeName = (n: string) => n.replace(/[^\p{L}\p{N}._-]+/gu, '_').slice(-120)
 
@@ -253,12 +255,26 @@ export async function fetchAttachment(id: string) {
 export const isImage = (a: Pick<Attachment, 'mime' | 'filename'>) =>
   (a.mime ?? '').startsWith('image/') || /\.(png|jpe?g|gif|webp|avif|bmp)$/i.test(a.filename)
 
-/** Подпись файла внутри задачи: скрин-1, скрин-2 (картинки) и файл-1, файл-2 (остальное). */
+// .webm сам по себе не отличает звук от видео — у голосовых/видео из
+// recorder.tsx mime всегда проставлен верно (File.type от MediaRecorder), а
+// для файла, прикреплённого руками, без mime показываем как обычный файл,
+// а не гадаем по одному расширению.
+export const isAudio = (a: Pick<Attachment, 'mime' | 'filename'>) =>
+  (a.mime ?? '').startsWith('audio/') || /\.(mp3|wav|ogg|m4a|aac|opus|flac)$/i.test(a.filename)
+
+export const isVideo = (a: Pick<Attachment, 'mime' | 'filename'>) =>
+  (a.mime ?? '').startsWith('video/') || /\.(mp4|mov|mkv|avi)$/i.test(a.filename)
+
+/** Подпись файла внутри задачи: скрин-N (картинки), голосовое-N, видео-N, файл-N (остальное). */
 export function fileLabels(files: Pick<Attachment, 'id' | 'mime' | 'filename' | 'created_at'>[]) {
   const out = new Map<string, string>()
-  let img = 0, other = 0
+  const n = { img: 0, audio: 0, video: 0, other: 0 }
   for (const f of [...files].sort((a, b) => a.created_at.localeCompare(b.created_at))) {
-    out.set(f.id, isImage(f) ? `скрин-${++img}` : `файл-${++other}`)
+    const label = isImage(f) ? `скрин-${++n.img}`
+      : isAudio(f) ? `голосовое-${++n.audio}`
+      : isVideo(f) ? `видео-${++n.video}`
+      : `файл-${++n.other}`
+    out.set(f.id, label)
   }
   return out
 }
