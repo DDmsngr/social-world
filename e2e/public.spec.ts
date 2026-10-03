@@ -16,7 +16,7 @@ test('лендинг не сломан появлением dashboard', async ({
 test('без входа /dashboard ведёт на форму входа', async ({ page }) => {
   await page.goto('dashboard')
   await expect(page).toHaveURL(/\/dashboard\/login$/)
-  await expect(page.getByRole('heading', { name: 'Team Workspace' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Chawo Workspace' })).toBeVisible()
   await expect(page.getByLabel('Пароль')).toBeVisible()
 })
 
@@ -77,7 +77,7 @@ test('в клиентском бандле нет серверных секре�
 
 test('страница входа доступна с клавиатуры и не пустая для скринридера', async ({ page }) => {
   await page.goto('dashboard/login')
-  await expect(page.getByRole('heading', { name: 'Team Workspace' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Chawo Workspace' })).toBeVisible()
   await page.keyboard.press('Tab')
   await expect(page.getByLabel('Email')).toBeFocused()
   await page.keyboard.press('Tab')

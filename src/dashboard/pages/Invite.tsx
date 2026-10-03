@@ -55,7 +55,7 @@ export default function Invite() {
   return (
     <main className="grid min-h-dvh place-items-center px-4">
       <div className="dash-card w-full max-w-sm p-6">
-        <div className="dash-label">Social World</div>
+        <div className="dash-label">Chawo</div>
         <h1 className="mt-1 text-xl font-semibold">Приглашение в команду</h1>
         {!token ? (
           <p role="alert" className="mt-4 text-sm">В ссылке нет токена приглашения. Запросите новую.</p>

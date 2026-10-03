@@ -82,7 +82,8 @@ export function WorkspaceProvider({ session, children }: { session: Session; chi
       ch.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
         keys.forEach(k => qc.invalidateQueries({ queryKey: [k] }))
       })
-    on('ws_tasks', ['tasks', 'task', 'stats', 'activity'])
+    on('ws_tasks', ['tasks', 'task', 'stats', 'activity', 'module-tasks', 'module-task-counts'])
+    on('cw_modules', ['modules', 'module-task-counts'])
     on('ws_task_labels', ['tasks', 'task'])
     on('ws_labels', ['labels'])
     on('ws_members', ['members'])
@@ -128,7 +129,7 @@ function NoAccess({ email }: { email: string }) {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
       <h1 className="text-xl font-semibold">Нет доступа к рабочему пространству</h1>
       <p className="dash-muted text-sm">
-        Аккаунт <b className="text-[var(--d-text)]">{email}</b> не состоит в команде Social World.
+        Аккаунт <b className="text-[var(--d-text)]">{email}</b> не состоит в команде Chawo.
         Попросите владельца прислать приглашение на этот email.
       </p>
       <button className="dash-btn dash-btn-ghost" onClick={() => void signOut()}>Выйти</button>

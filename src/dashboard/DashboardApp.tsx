@@ -15,6 +15,8 @@ import Team from './pages/Team'
 import MemberProfile from './pages/MemberProfile'
 import Files from './pages/Files'
 import Releases from './pages/Releases'
+import AppMap from './pages/AppMap'
+import ModuleDetail from './pages/ModuleDetail'
 import FilePage from './pages/FilePage'
 import Messages from './pages/Messages'
 import SearchPage from './pages/SearchPage'
@@ -48,7 +50,7 @@ export default function DashboardApp() {
     m.content = 'noindex, nofollow'
     document.head.appendChild(m)
     const prev = document.title
-    document.title = 'Team Workspace — Social World'
+    document.title = 'Chawo Workspace'
     return () => { m.remove(); document.title = prev }
   }, [])
 
@@ -83,6 +85,8 @@ export default function DashboardApp() {
                 <Route path="files" element={<Files />} />
                 <Route path="files/:id" element={<FilePage />} />
                 <Route path="releases" element={<Releases />} />
+                <Route path="map" element={<AppMap />} />
+                <Route path="map/:id" element={<ModuleDetail />} />
                 <Route path="messages" element={<Messages />} />
                 <Route path="messages/:convId" element={<Messages />} />
                 <Route path="search" element={<SearchPage />} />

@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 import type {
-  ActivityEvent, AppRelease, Attachment, Conversation, Invitation, Label, Member, Message,
-  Notification, Project, Task, TaskComment, TaskFilters, TaskStatus, Workspace,
+  ActivityEvent, AppModule, AppRelease, Attachment, Conversation, Invitation, Label, Member, Message,
+  ModuleInput, Notification, Project, Task, TaskComment, TaskFilters, TaskStatus, Workspace,
 } from './types'
 import { PRIORITIES, plusDaysIso, todayIso } from './meta'
 
@@ -433,4 +433,58 @@ export interface SearchResult {
 
 export async function search(workspaceId: string, q: string) {
   return check(await supabase.rpc('ws_search', { p_ws: workspaceId, p_q: q })) as SearchResult
+}
+
+// ── карта приложения ────────────────────────────────────────────────────────
+
+export async function fetchModules(workspaceId: string) {
+  return check(await supabase.from('cw_modules').select('*').eq('workspace_id', workspaceId)
+    .is('archived_at', null).order('position').order('name')) as AppModule[]
+}
+
+export async function createModule(workspaceId: string, input: ModuleInput) {
+  return check(await supabase.from('cw_modules').insert({ ...input, workspace_id: workspaceId }).select('*').single()) as AppModule
+}
+
+export async function updateModule(id: string, patch: Partial<ModuleInput>) {
+  check(await supabase.from('cw_modules').update(patch).eq('id', id).select('id').single())
+}
+
+export async function archiveModule(id: string) {
+  check(await supabase.from('cw_modules').update({ archived_at: new Date().toISOString() }).eq('id', id).select('id').single())
+}
+
+export async function insertModules(rows: object[]) {
+  check(await supabase.from('cw_modules').insert(rows))
+}
+
+export async function fetchModuleTasks(moduleId: string) {
+  const links = check(await supabase.from('cw_module_tasks').select('task_id').eq('module_id', moduleId)) as { task_id: string }[]
+  if (links.length === 0) return [] as Task[]
+  return check(await supabase.from('ws_tasks').select('*').in('id', links.map(l => l.task_id))
+    .order('num', { ascending: false })) as unknown as Task[]
+}
+
+export async function fetchTaskModules(taskId: string) {
+  const links = check(await supabase.from('cw_module_tasks').select('module_id').eq('task_id', taskId)) as { module_id: string }[]
+  return links.map(l => l.module_id)
+}
+
+export async function linkTask(moduleId: string, taskId: string) {
+  check(await supabase.from('cw_module_tasks').upsert({ module_id: moduleId, task_id: taskId }, { ignoreDuplicates: true }))
+}
+
+export async function unlinkTask(moduleId: string, taskId: string) {
+  check(await supabase.from('cw_module_tasks').delete().eq('module_id', moduleId).eq('task_id', taskId))
+}
+
+export async function fetchModuleTaskCounts(workspaceId: string) {
+  const rows = check(await supabase.from('cw_module_tasks')
+    .select('module_id, ws_tasks!inner(status, workspace_id)').eq('ws_tasks.workspace_id', workspaceId)) as unknown as { module_id: string; ws_tasks: { status: string } }[]
+  const out: Record<string, { open: number; done: number }> = {}
+  for (const r of rows) {
+    const c = (out[r.module_id] ??= { open: 0, done: 0 })
+    if (r.ws_tasks.status === 'done') c.done++; else c.open++
+  }
+  return out
 }

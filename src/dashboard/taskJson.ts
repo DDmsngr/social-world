@@ -192,7 +192,7 @@ export function buildTemplate(firstPersonEmail: string | null) {
 }
 
 /** Текст, который можно отдать любому ИИ-ассистенту вместе с описанием задач. */
-export const AI_PROMPT = `Составь JSON-файл с задачами для импорта в Team Workspace (Social World).
+export const AI_PROMPT = `Составь JSON-файл с задачами для импорта в Chawo Workspace.
 
 Верни только JSON, без пояснений, в таком виде:
 {

@@ -138,3 +138,25 @@ export interface TaskFilters {
   q?: string
   sort: 'newest' | 'oldest' | 'priority' | 'due' | 'updated'
 }
+
+export type ModuleKind = 'module' | 'screen' | 'feature' | 'service'
+export type ModuleStatus = 'idea' | 'planned' | 'in_dev' | 'beta' | 'live' | 'deprecated'
+
+export interface AppModule {
+  id: string
+  workspace_id: string
+  parent_id: string | null
+  kind: ModuleKind
+  name: string
+  description: string
+  status: ModuleStatus
+  owner_id: string | null
+  release_code: number | null
+  repo_path: string
+  position: number
+  created_at: string
+  updated_at: string
+  archived_at: string | null
+}
+
+export type ModuleInput = Pick<AppModule, 'parent_id' | 'kind' | 'name' | 'description' | 'status' | 'owner_id' | 'release_code' | 'repo_path'>

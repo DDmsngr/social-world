@@ -30,8 +30,8 @@ export default function Login() {
     <main className="grid min-h-dvh place-items-center px-4">
       <form onSubmit={submit} className="dash-card w-full max-w-sm space-y-4 p-6" aria-labelledby="login-title">
         <div>
-          <div className="dash-label">Social World</div>
-          <h1 id="login-title" className="mt-1 text-xl font-semibold">Team Workspace</h1>
+          <span className="dash-logo mb-3" aria-hidden>C</span>
+          <h1 id="login-title" className="font-instrument text-3xl tracking-tight">Chawo <span className="font-inter text-base font-semibold dash-muted">Workspace</span></h1>
           <p className="dash-muted mt-1 text-sm">Внутренний инструмент команды. Вход только для участников.</p>
         </div>
         <Field label="Email">

@@ -17,7 +17,7 @@ export function Avatar({ member, size = 28 }: { member?: Pick<Member, 'name' | '
     <img src={member.avatar_url} alt={member.name} className="shrink-0 rounded-full object-cover" style={style} />
   ) : (
     <span
-      className="inline-flex shrink-0 items-center justify-center rounded-full bg-[var(--d-primary)] font-semibold text-white"
+      className="inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--d-champagne)] to-[var(--d-primary)] font-semibold text-[#2a1520]"
       style={style} title={member.name} aria-label={member.name}
     >{initials(member.name)}</span>
   )

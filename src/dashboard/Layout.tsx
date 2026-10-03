@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Bell, FolderOpen, LayoutDashboard, ListChecks, LogOut, MessageSquare, Search, Smartphone, Users } from 'lucide-react'
+import { Bell, FolderOpen, LayoutDashboard, ListChecks, Network, LogOut, MessageSquare, Search, Smartphone, Users } from 'lucide-react'
 import { signOut, useWorkspace } from './auth'
 import { fetchNotifications, fetchUnread } from './api'
 import { Avatar } from './ui'
@@ -10,6 +10,7 @@ import ChangePassword from './ChangePassword'
 const NAV = [
   { to: '/dashboard', label: 'Обзор', icon: LayoutDashboard, end: true },
   { to: '/dashboard/tasks', label: 'Задачи', icon: ListChecks },
+  { to: '/dashboard/map', label: 'Карта', icon: Network },
   { to: '/dashboard/team', label: 'Команда', icon: Users },
   { to: '/dashboard/files', label: 'Файлы', icon: FolderOpen },
   { to: '/dashboard/releases', label: 'Релизы', icon: Smartphone },
@@ -41,15 +42,19 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh">
       <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-[var(--d-line)] bg-[var(--d-surface)] p-4 md:flex">
         <div className="mb-6 px-2">
-          <div className="dash-label">{workspace.name}</div>
-          <div className="mt-0.5 text-base font-semibold">Team Workspace</div>
-          <div className="dash-muted text-xs">{project.name}</div>
+          <div className="flex items-center gap-2.5">
+            <span className="dash-logo" aria-hidden>C</span>
+            <div className="min-w-0">
+              <div className="font-instrument text-2xl leading-none tracking-tight">Chawo</div>
+              <div className="dash-muted mt-1 truncate text-xs">{workspace.name} · {project.name}</div>
+            </div>
+          </div>
         </div>
         <nav aria-label="Основная навигация" className="flex flex-1 flex-col gap-1">
           {NAV.map(n => (
             <NavLink key={n.to} to={n.to} end={n.end}
               className={({ isActive }) => `flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors ${isActive
-                ? 'bg-[var(--d-champagne)] text-[#21151d]' : 'text-[var(--d-muted)] hover:bg-[var(--d-raised)] hover:text-[var(--d-text)]'}`}>
+                ? 'bg-gradient-to-r from-[var(--d-champagne)] to-[#efd9a6] font-semibold text-[#21151d] shadow-[0_6px_18px_-8px_rgba(230,201,138,.7)]' : 'text-[var(--d-muted)] hover:bg-[var(--d-raised)] hover:text-[var(--d-text)]'}`}>
               <n.icon className="h-4 w-4" aria-hidden />
               <span className="flex-1">{n.label}</span>
               {badge(n.to) > 0 && (
@@ -74,7 +79,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="dash-safe-top sticky top-0 z-30 flex items-center gap-3 border-b border-[var(--d-line)] bg-[var(--d-bg)]/90 px-4 py-3 backdrop-blur md:px-6">
-          <div className="text-sm font-semibold md:hidden">{workspace.name}</div>
+          <div className="font-instrument text-xl md:hidden">Chawo</div>
           <form role="search" className="relative ml-auto w-full max-w-md" onSubmit={e => { e.preventDefault(); if (q.trim()) nav(`/dashboard/search?q=${encodeURIComponent(q.trim())}`) }}>
             <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 dash-muted" aria-hidden />
             <input className="dash-input pl-9" type="search" value={q} onChange={e => setQ(e.target.value)}
@@ -97,7 +102,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <nav aria-label="Навигация" className="dash-safe-bottom fixed inset-x-0 bottom-0 z-40 flex border-t border-[var(--d-line)] bg-[var(--d-surface)] md:hidden">
           {NAV.map(n => (
             <NavLink key={n.to} to={n.to} end={n.end}
-              className={({ isActive }) => `relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${isActive ? 'text-[var(--d-champagne)]' : 'text-[var(--d-muted)]'}`}>
+              className={({ isActive }) => `relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] ${isActive ? 'text-[var(--d-champagne)]' : 'text-[var(--d-muted)]'}`}>
               <n.icon className="h-5 w-5" aria-hidden />
               {n.label}
               {badge(n.to) > 0 && <span className="absolute right-[22%] top-1.5 rounded-full bg-[var(--d-tint)] px-1.5 text-[10px] font-bold text-[#21151d]">{badge(n.to)}</span>}

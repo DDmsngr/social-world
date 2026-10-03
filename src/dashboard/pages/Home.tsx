@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { fetchStats, fetchTasks } from '../api'
+import { fetchModules, fetchStats, fetchTasks } from '../api'
+import { buildTree, countByStatus, readiness } from '../map'
+import { ReadinessBar } from '../mapParts'
 import { useWorkspace } from '../auth'
 import { fmtDate, plusDaysIso, timeAgo, todayIso } from '../meta'
 import { supabase } from '../supabase'
@@ -43,6 +45,11 @@ export default function Home() {
     },
   })
 
+  const modules = useQuery({ queryKey: ['modules', workspace.id], queryFn: () => fetchModules(workspace.id) })
+  const roots = buildTree(modules.data ?? [])
+  const mapTotal = roots.length ? roots.reduce((a, r) => a + readiness(r), 0) / roots.length : 0
+  const mapCounts = countByStatus(modules.data ?? [])
+
   const all = tasks.data ?? []
   const mine = all.filter(t => t.assignee_id === userId && t.status !== 'done')
   const soon = all.filter(t => t.due_date && t.status !== 'done' && t.due_date >= todayIso() && t.due_date <= plusDaysIso(7))
@@ -66,6 +73,17 @@ export default function Home() {
           ))}
         </div>
       </QueryState>
+
+      <Link to="/dashboard/map" className="dash-card mb-5 block p-4 transition-colors hover:bg-[var(--d-raised)]" data-testid="map-summary">
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+          <span className="dash-label">Готовность Chawo</span>
+          <span className="dash-muted text-xs">
+            {(modules.data ?? []).length === 0 ? 'Карта приложения пока пуста — открыть'
+              : `${mapCounts.live} работает · ${mapCounts.beta} бета · ${mapCounts.in_dev} в разработке · ${mapCounts.planned + mapCounts.idea} впереди`}
+          </span>
+        </div>
+        <ReadinessBar value={mapTotal} />
+      </Link>
 
       {(blocked.length > 0 || overdue.length > 0) && (
         <div className="mb-5 grid gap-3 md:grid-cols-2">
