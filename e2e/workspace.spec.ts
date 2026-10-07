@@ -90,6 +90,27 @@ test('комментарий, ответ и файл в задаче', async ({ 
   await expect(page.getByTestId('files')).toContainText('e2e-note.txt')
 })
 
+test('подзадачи: чек-лист в карточке, счётчик на доске, сами они карточками не торчат', async ({ page }) => {
+  await admin(page)
+  await page.goto('dashboard/tasks')
+  await page.getByRole('link', { name: title }).click()
+  const panel = page.locator('section[aria-labelledby="sub-h"]')
+  await panel.getByRole('button', { name: 'Добавить' }).click()
+  await page.getByLabel('По одной на строку').fill('E2E подзадача А\nE2E подзадача Б')
+  await page.getByRole('dialog').getByRole('button', { name: 'Добавить' }).click()
+  await expect(panel.getByText('E2E подзадача А')).toBeVisible()
+  await expect(panel.getByText('E2E подзадача Б')).toBeVisible()
+  await expect(panel.getByRole('heading', { name: /Подзадачи/ })).toContainText('0/2')
+
+  await panel.getByRole('button', { name: /Отметить «E2E подзадача А»/ }).click()
+  await expect(panel.getByRole('heading', { name: /Подзадачи/ })).toContainText('1/2')
+
+  // на доске у родителя счётчик, а подзадач отдельными карточками нет
+  await page.goto('dashboard/tasks')
+  await expect(page.getByRole('link', { name: title })).toBeVisible()
+  await expect(page.getByTitle('Подзадачи: 1 из 2').first()).toBeVisible()
+  await expect(page.getByText('E2E подзадача А')).toHaveCount(0)
+})
 test('member: видит уведомление, не может создавать и менять приоритет', async ({ page }) => {
   test.skip(!memberOk, 'нет E2E_MEMBER_*')
   await member(page)
@@ -623,7 +644,8 @@ test('массовые действия участника: только ста�
 
 test('релизы: пустой каталог; список, скачивание и правка описания (ответы REST подменены)', async ({ page }) => {
   await admin(page)
-  await page.getByRole('link', { name: 'Релизы' }).click()
+  // на телефоне «Релизы» лежит в «Ещё», поэтому открываем по адресу
+  await page.goto('dashboard/releases')
   await expect(page.getByRole('heading', { name: 'Релизы' })).toBeVisible()
   // в песочнице CI-публикаций нет — настоящий ответ пуст
   await expect(page.getByText('Сборок пока нет')).toBeVisible()

@@ -82,7 +82,7 @@ export function WorkspaceProvider({ session, children }: { session: Session; chi
       ch.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
         keys.forEach(k => qc.invalidateQueries({ queryKey: [k] }))
       })
-    on('ws_tasks', ['tasks', 'task', 'stats', 'activity', 'module-tasks', 'module-task-counts'])
+    on('ws_tasks', ['tasks', 'task', 'stats', 'activity', 'subtasks', 'module-tasks', 'module-task-counts'])
     on('cw_modules', ['modules', 'module-task-counts'])
     on('ws_task_labels', ['tasks', 'task'])
     on('ws_labels', ['labels'])

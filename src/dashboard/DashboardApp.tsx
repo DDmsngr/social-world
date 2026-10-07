@@ -21,6 +21,7 @@ import FilePage from './pages/FilePage'
 import Messages from './pages/Messages'
 import SearchPage from './pages/SearchPage'
 import Notifications from './pages/Notifications'
+import Settings from './pages/Settings'
 
 // Realtime мгновенно инвалидирует кеш, а опрос раз в 20 с — страховка на случай
 // оборванного websocket (корпоративный прокси, спящая вкладка). Вкладка в фоне не опрашивается.
@@ -51,7 +52,19 @@ export default function DashboardApp() {
     document.head.appendChild(m)
     const prev = document.title
     document.title = 'Chawo Workspace'
-    return () => { m.remove(); document.title = prev }
+    // установка на телефон: манифест и оболочка только у панели, лендинг не затрагивается
+    const base = `${import.meta.env.BASE_URL}dashboard/`
+    const link = document.createElement('link')
+    link.rel = 'manifest'
+    link.href = `${base}manifest.webmanifest`
+    const theme = document.createElement('meta')
+    theme.name = 'theme-color'
+    theme.content = '#21151d'
+    document.head.append(link, theme)
+    if ('serviceWorker' in navigator && import.meta.env.PROD) {
+      navigator.serviceWorker.register(`${base}sw.js`, { scope: base }).catch(() => undefined)
+    }
+    return () => { m.remove(); link.remove(); theme.remove(); document.title = prev }
   }, [])
 
   if (!isConfigured) {
@@ -91,6 +104,7 @@ export default function DashboardApp() {
                 <Route path="messages/:convId" element={<Messages />} />
                 <Route path="search" element={<SearchPage />} />
                 <Route path="notifications" element={<Notifications />} />
+                <Route path="settings" element={<Settings />} />
               </Route>
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>

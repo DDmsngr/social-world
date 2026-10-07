@@ -65,6 +65,7 @@ const escapeLike = (s: string) => s.replace(/[\\%_]/g, m => '\\' + m).replace(/[
 
 export async function fetchTasks(projectId: string, f: TaskFilters, limit = 300) {
   let q = supabase.from('ws_tasks').select(TASK_SELECT).eq('project_id', projectId).is('archived_at', null)
+  if (f.topLevel) q = q.is('parent_id', null)
   if (f.status?.length) q = q.in('status', f.status)
   if (f.priority?.length) q = q.in('priority', f.priority)
   if (f.assignee === 'none') q = q.is('assignee_id', null)
@@ -117,7 +118,7 @@ export async function createTask(t: NewTask) {
 }
 
 export type TaskPatch = Partial<Pick<Task,
-  'title' | 'description' | 'status' | 'priority' | 'assignee_id' | 'due_date' | 'position' | 'archived_at'>>
+  'title' | 'description' | 'status' | 'priority' | 'assignee_id' | 'due_date' | 'position' | 'archived_at' | 'parent_id'>>
 
 export async function updateTask(id: string, patch: TaskPatch) {
   const rows = check(await supabase.from('ws_tasks').update(patch).eq('id', id).select('id')) as { id: string }[]
@@ -125,6 +126,32 @@ export async function updateTask(id: string, patch: TaskPatch) {
   if (rows.length === 0) throw new Error('Нет прав на изменение этой задачи')
 }
 
+// ── подзадачи ────────────────────────────────────────────────────────────────
+//
+// Та же ws_tasks с parent_id: полноценная задача (свой исполнитель, срок,
+// обсуждение), просто показывается не отдельной карточкой на доске, а списком
+// внутри родительской — удобно для «одна задача, куча проверок».
+
+export async function fetchSubtasks(parentId: string) {
+  const rows = check(await supabase.from('ws_tasks').select(TASK_SELECT)
+    .eq('parent_id', parentId).is('archived_at', null).order('created_at', { ascending: true })) as unknown as TaskRow[]
+  return rows.map(mapTask)
+}
+
+/** По одному названию на строку — чек-лист проверок одним махом. */
+export async function addSubtasks(parentId: string, titles: string[]) {
+  return check(await supabase.rpc('ws_task_add_subtasks', { p_parent: parentId, p_titles: titles })) as
+    { id: string; num: number; title: string }[]
+}
+
+/** «У меня уже есть кучка отдельных задач — сделать их подзадачами одной». */
+export async function attachSubtasks(parentId: string, taskIds: string[]) {
+  return bulkUpdateTasks(taskIds, { parent_id: parentId })
+}
+
+export async function detachSubtask(id: string) {
+  return updateTask(id, { parent_id: null })
+}
 /**
  * Массовое обновление одним запросом. Один SQL UPDATE затрагивает все строки сразу:
  * если триггер БД (правила «кто что может менять») отклонит хоть одну, откатится весь
@@ -487,4 +514,45 @@ export async function fetchModuleTaskCounts(workspaceId: string) {
     if (r.ws_tasks.status === 'done') c.done++; else c.open++
   }
   return out
+}
+
+export type ProfilePatch = Partial<Pick<Member, 'name' | 'position' | 'phone' | 'avatar_url' | 'presence_mode' | 'presence_from' | 'presence_to' | 'presence_tz'>>
+
+export async function updateMyProfile(memberId: string, patch: ProfilePatch) {
+  const rows = check(await supabase.from('ws_members').update(patch).eq('id', memberId).select('id')) as unknown[]
+  if (!rows.length) throw new Error('Не удалось сохранить профиль')
+}
+
+const AVATARS = 'avatars'
+const AVATAR_SIZE = 256
+
+/** Обрезает до квадрата по центру и сжимает до 256 px: лимит бакета 512 КБ. */
+async function squareJpeg(file: File): Promise<Blob> {
+  const bmp = await createImageBitmap(file).catch(() => { throw new Error('Не удалось прочитать изображение') })
+  const side = Math.min(bmp.width, bmp.height)
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = AVATAR_SIZE
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE)
+  bmp.close()
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(b => (b ? resolve(b) : reject(new Error('Не удалось сжать изображение'))), 'image/jpeg', 0.86))
+}
+
+const avatarPath = (url: string | null) => url?.split(`/${AVATARS}/`)[1]?.split('?')[0]
+
+/** Загружает новое фото и возвращает его публичный адрес; предыдущее удаляет. */
+export async function uploadAvatar(userId: string, file: File, previousUrl: string | null) {
+  const blob = await squareJpeg(file)
+  const path = `${userId}/${Date.now()}.jpg`
+  const up = await supabase.storage.from(AVATARS).upload(path, blob, { contentType: 'image/jpeg' })
+  if (up.error) throw new Error(up.error.message)
+  const old = avatarPath(previousUrl)
+  if (old) await supabase.storage.from(AVATARS).remove([old])
+  return supabase.storage.from(AVATARS).getPublicUrl(path).data.publicUrl
+}
+
+export async function removeAvatarFile(url: string | null) {
+  const old = avatarPath(url)
+  if (old) await supabase.storage.from(AVATARS).remove([old])
 }

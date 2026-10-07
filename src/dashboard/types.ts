@@ -13,11 +13,19 @@ export interface Member {
   email: string
   name: string
   avatar_url: string | null
+  position?: string | null
+  phone?: string | null
   role: Role
   status: MemberStatus
   joined_at: string | null
   last_seen: string | null
+  presence_mode?: PresenceMode
+  presence_from?: string
+  presence_to?: string
+  presence_tz?: string
 }
+
+export type PresenceMode = 'always' | 'schedule' | 'never'
 
 export interface Label { id: string; workspace_id: string; name: string; color: string }
 
@@ -41,6 +49,11 @@ export interface Task {
   label_ids: string[]
   comment_count: number
   attachment_count: number
+  /** Родительская задача, если это подзадача (чек-лист внутри другой задачи). Один уровень вложенности. */
+  parent_id: string | null
+  /** Сколько подзадач и сколько из них выполнены — считает база при любом изменении. */
+  subtask_total: number
+  subtask_done: number
 }
 
 export interface TaskComment {
@@ -136,6 +149,8 @@ export interface TaskFilters {
   label?: string
   due?: 'overdue' | 'week' | 'none'
   q?: string
+  /** Только задачи верхнего уровня: подзадачи живут внутри родителя, а не отдельными карточками. */
+  topLevel?: boolean
   sort: 'newest' | 'oldest' | 'priority' | 'due' | 'updated'
 }
 

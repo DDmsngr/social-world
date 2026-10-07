@@ -1,26 +1,34 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Bell, FolderOpen, LayoutDashboard, ListChecks, Network, LogOut, MessageSquare, Search, Smartphone, Users } from 'lucide-react'
+import {
+  Bell, FolderOpen, LayoutDashboard, ListChecks, LogOut, Menu, MessageSquare, Network, Search, Settings, Smartphone, Users,
+  type LucideIcon,
+} from 'lucide-react'
 import { signOut, useWorkspace } from './auth'
 import { fetchNotifications, fetchUnread } from './api'
-import { Avatar } from './ui'
+import { Avatar, Modal } from './ui'
 import ChangePassword from './ChangePassword'
 
-const NAV = [
-  { to: '/dashboard', label: 'Обзор', icon: LayoutDashboard, end: true },
-  { to: '/dashboard/tasks', label: 'Задачи', icon: ListChecks },
+interface NavItem { to: string; label: string; icon: LucideIcon; end?: boolean; mobile?: boolean }
+
+// mobile: пункт попадает в нижнюю панель телефона, остальные — в «Ещё»
+const NAV: NavItem[] = [
+  { to: '/dashboard', label: 'Обзор', icon: LayoutDashboard, end: true, mobile: true },
+  { to: '/dashboard/tasks', label: 'Задачи', icon: ListChecks, mobile: true },
+  { to: '/dashboard/messages', label: 'Сообщения', icon: MessageSquare, mobile: true },
   { to: '/dashboard/map', label: 'Карта', icon: Network },
   { to: '/dashboard/team', label: 'Команда', icon: Users },
   { to: '/dashboard/files', label: 'Файлы', icon: FolderOpen },
   { to: '/dashboard/releases', label: 'Релизы', icon: Smartphone },
-  { to: '/dashboard/messages', label: 'Сообщения', icon: MessageSquare },
+  { to: '/dashboard/settings', label: 'Настройки', icon: Settings },
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { workspace, project, me } = useWorkspace()
   const nav = useNavigate()
   const loc = useLocation()
+  const [more, setMore] = useState(false)
 
   const unread = useQuery({ queryKey: ['unread', workspace.id], queryFn: () => fetchUnread(workspace.id), refetchInterval: 60_000 })
   const notes = useQuery({ queryKey: ['notifications', workspace.id], queryFn: () => fetchNotifications(workspace.id), refetchInterval: 60_000 })
@@ -29,6 +37,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const [q, setQ] = useState('')
   useEffect(() => { if (!loc.pathname.endsWith('/search')) setQ('') }, [loc.pathname])
+  useEffect(() => { setMore(false) }, [loc.pathname])
   // дебаунс: поиск уходит в БД только после паузы в наборе
   useEffect(() => {
     if (q.trim().length < 2) return
@@ -37,6 +46,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   }, [q]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const badge = (to: string) => (to.endsWith('/messages') && msgBadge > 0 ? msgBadge : 0)
+  const moreActive = NAV.some(n => !n.mobile && loc.pathname.startsWith(n.to))
 
   return (
     <div className="flex min-h-dvh">
@@ -65,11 +75,13 @@ export default function Layout({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <div className="flex items-center gap-2 border-t border-[var(--d-line)] pt-3">
-          <Avatar member={me} size={32} />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium">{me.name}</div>
-            <div className="dash-muted truncate text-xs">{me.role}</div>
-          </div>
+          <NavLink to="/dashboard/settings" className="flex min-w-0 flex-1 items-center gap-2 rounded-md hover:opacity-80" title="Настройки профиля">
+            <Avatar member={me} size={32} />
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium">{me.name}</div>
+              <div className="dash-muted truncate text-xs">{me.position || me.role}</div>
+            </div>
+          </NavLink>
           <ChangePassword />
           <button className="dash-btn dash-btn-ghost dash-btn-sm" onClick={() => void signOut()} aria-label="Выйти" title="Выйти">
             <LogOut className="h-4 w-4" aria-hidden />
@@ -92,15 +104,12 @@ export default function Layout({ children }: { children: ReactNode }) {
               <span className="absolute -right-1 -top-1 rounded-full bg-[var(--d-tint)] px-1.5 text-[10px] font-bold text-[#21151d]">{noteBadge}</span>
             )}
           </NavLink>
-          <button className="dash-btn dash-btn-ghost !px-3 md:hidden" onClick={() => void signOut()} aria-label="Выйти">
-            <LogOut className="h-4 w-4" aria-hidden />
-          </button>
         </header>
 
         <main className="min-w-0 flex-1 px-4 pb-28 pt-5 md:px-6 md:pb-10">{children}</main>
 
         <nav aria-label="Навигация" className="dash-safe-bottom fixed inset-x-0 bottom-0 z-40 flex border-t border-[var(--d-line)] bg-[var(--d-surface)] md:hidden">
-          {NAV.map(n => (
+          {NAV.filter(n => n.mobile).map(n => (
             <NavLink key={n.to} to={n.to} end={n.end}
               className={({ isActive }) => `relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] ${isActive ? 'text-[var(--d-champagne)]' : 'text-[var(--d-muted)]'}`}>
               <n.icon className="h-5 w-5" aria-hidden />
@@ -108,7 +117,33 @@ export default function Layout({ children }: { children: ReactNode }) {
               {badge(n.to) > 0 && <span className="absolute right-[22%] top-1.5 rounded-full bg-[var(--d-tint)] px-1.5 text-[10px] font-bold text-[#21151d]">{badge(n.to)}</span>}
             </NavLink>
           ))}
+          <button type="button" onClick={() => setMore(true)}
+            className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] ${moreActive ? 'text-[var(--d-champagne)]' : 'text-[var(--d-muted)]'}`}>
+            <Menu className="h-5 w-5" aria-hidden />
+            Ещё
+          </button>
         </nav>
+
+        <Modal open={more} onClose={() => setMore(false)} title="Разделы">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              {NAV.map(n => (
+                <NavLink key={n.to} to={n.to} end={n.end}
+                  className={({ isActive }) => `flex min-h-11 items-center gap-2.5 rounded-md border px-3 text-sm ${isActive
+                    ? 'border-[var(--d-champagne)] text-[var(--d-champagne)]' : 'border-[var(--d-line)] text-[var(--d-text)]'}`}>
+                  <n.icon className="h-4 w-4" aria-hidden />{n.label}
+                </NavLink>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 border-t border-[var(--d-line)] pt-3">
+              <Avatar member={me} size={30} />
+              <div className="min-w-0 flex-1 truncate text-sm">{me.name}</div>
+              <button className="dash-btn dash-btn-ghost dash-btn-sm" onClick={() => void signOut()}>
+                <LogOut className="h-4 w-4" aria-hidden /> Выйти
+              </button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </div>
   )

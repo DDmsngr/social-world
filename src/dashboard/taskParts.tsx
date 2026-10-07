@@ -4,7 +4,7 @@ import {
 } from 'react'
 import { Link } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, Check, MessageSquare, Paperclip } from 'lucide-react'
+import { CalendarDays, Check, ListChecks, MessageSquare, Paperclip } from 'lucide-react'
 import { claimTask, createTask, releaseTask, updateTask, type TaskPatch } from './api'
 import { useWorkspace } from './auth'
 import { PRIORITIES, STATUSES, fmtDate, isOverdue, priorityMeta, statusMeta, todayIso } from './meta'
@@ -182,6 +182,11 @@ export function TaskCardBody({ task }: { task: Task }) {
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <PriorityChip priority={task.priority} />
         <LabelChips ids={task.label_ids} />
+        {task.subtask_total > 0 && (
+          <span className="dash-chip" title={`Подзадачи: ${task.subtask_done} из ${task.subtask_total}`}>
+            <ListChecks className="h-3 w-3" aria-hidden /> {task.subtask_done}/{task.subtask_total}
+          </span>
+        )}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         {free && <span className="order-last ml-auto"><ClaimButton task={task} compact /></span>}
