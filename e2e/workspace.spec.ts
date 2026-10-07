@@ -149,7 +149,8 @@ test('поиск и фильтры реально сужают выборку', 
 test('команда, профиль, приглашение', async ({ page }) => {
   await admin(page)
   await page.goto('dashboard/team')
-  await page.getByRole('link', { name: 'E2E Admin' }).first().click()
+  // в боковой панели тоже есть ссылка с этим именем (настройки) — берём только карточку в списке
+  await page.getByRole('main').getByRole('link', { name: 'E2E Admin' }).first().click()
   await expect(page.getByRole('heading', { name: 'E2E Admin' })).toBeVisible()
 
   await page.goto('dashboard/team')
