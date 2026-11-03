@@ -16,6 +16,7 @@ import Footer from './components/Footer'
 
 const DashboardApp = lazy(() => import('./dashboard/DashboardApp'))
 const ReferralDownload = lazy(() => import('./components/ReferralDownload'))
+const EventPublic = lazy(() => import('./components/EventPublic'))
 
 export default function App() {
   return (
@@ -30,6 +31,11 @@ export default function App() {
             только те, у кого его ещё нет. */}
         <Route path="/o/ref/:code" element={
           <Suspense fallback={<div className="bg-ink min-h-screen" />}><ReferralDownload /></Suspense>
+        } />
+        {/* Ссылка на событие для тех, у кого нет приложения (public_event_card,
+            миграция 0116 в social-world-app). */}
+        <Route path="/o/event/:id" element={
+          <Suspense fallback={<div className="bg-ink min-h-screen" />}><EventPublic /></Suspense>
         } />
         <Route path="*" element={<Landing />} />
       </Routes>
